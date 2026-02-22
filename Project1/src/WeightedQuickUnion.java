@@ -17,11 +17,11 @@ public class WeightedQuickUnion extends QuickUnion {
         }
 
         if (rootA.getHeight() > rootB.getHeight()) {
-            rootB.setNext(A.getNext());
+            rootB.setNext(rootA);
         } else if (rootA.getHeight() < rootB.getHeight()) {
-            rootA.setNext(B.getNext());
+            rootA.setNext(rootB);
         } else {
-            rootB.setNext(A.getNext());
+            rootB.setNext(rootA);
             rootA.setHeight(rootA.getHeight() + 1);
         }
         arrayAccesses++;
