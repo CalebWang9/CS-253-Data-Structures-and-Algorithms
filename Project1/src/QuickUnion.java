@@ -55,7 +55,6 @@ public class QuickUnion {
 		return temp;
 	}
 
-	/** Max stored height among roots (rank in weighted variants). */
 	public int getMaxTreeHeight() {
 		int max = 0;
 		for (Node n : QuickUnionArray) {

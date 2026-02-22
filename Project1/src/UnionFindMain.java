@@ -47,9 +47,7 @@ public class UnionFindMain {
 
 		} while (invalid2);
 
-		long startTime = System.nanoTime();
 
-		scan.close();
 		int n = 0;
 		if (sizeChoice.equals("1k")) {
 			n = 1000;
@@ -61,47 +59,59 @@ public class UnionFindMain {
 			n = 1000000;
 		}
 
-		QuickUnion Test1 = new QuickUnion(n);
-        // QuickUnion Test1 = new WeightedQuickUnion(n);
-		// QuickUnion Test1 = new WQUUFPathCompression(n);
-
-
-		try (BufferedReader reader = new BufferedReader(
-				new FileReader("datasets/" + sizeChoice + "/" + fileChoice + ".txt"))) { //
-			String line;
-			String first;
-			String second;
-			int firstNumber = 0;
-			int secondNumber = 0;
-
-			while ((line = reader.readLine()) != null) {
-				for (int i = 0; i < line.length(); i++) {
-					if (line.charAt(i) == 32) {
-						int spaceIndex = i;
-						first = line.substring(0, i);
-						second = line.substring(i + 1);
-						firstNumber = Integer.parseInt(first);
-						secondNumber = Integer.parseInt(second);
-
-						break;
-					}
-				}
-				Test1.Union(firstNumber, secondNumber);
-
+		int ufChoice;
+		do {
+			System.out.println("which UF do you want to run? 1, 2, 3, or 0 to quit");
+			ufChoice = Integer.parseInt(scan.nextLine());
+			if (ufChoice == 0) {
+				break;
 			}
 
-		} catch (IOException e) {
-			System.out.println("Error reading file: " + e.getMessage());
-			e.printStackTrace();
-		}
+			QuickUnion Test1 = null;
+			long startTime = System.nanoTime();
+			if (ufChoice == 1) {
+				Test1 = new QuickUnion(n);
+			} else if (ufChoice == 2) {
+				Test1 = new WeightedQuickUnion(n);
+			} else {
+				Test1 = new WQUUFPathCompression(n);
+			}
 
-		long endTime = System.nanoTime();
-		double delta = (endTime - startTime) / 1e6;
-		// Display the solution you discovered:
-		System.out.println("Max Tree Height (stored): " + Test1.getMaxTreeHeight());
-		System.out.println("Array Accesses: " + Test1.arrayAccesses);
-		System.out.println("Re-visits: " + Test1.revisitConnections);
-		System.out.println("Runtime: " + delta + " ms");
+			try (BufferedReader reader = new BufferedReader(
+					new FileReader("datasets/" + sizeChoice + "/" + fileChoice + ".txt"))) {
+				String line;
+				String first;
+				String second;
+				int firstNumber = 0;
+				int secondNumber = 0;
 
+				while ((line = reader.readLine()) != null) {
+					for (int i = 0; i < line.length(); i++) {
+						if (line.charAt(i) == 32) {
+							first = line.substring(0, i);
+							second = line.substring(i + 1);
+							firstNumber = Integer.parseInt(first);
+							secondNumber = Integer.parseInt(second);
+							break;
+						}
+					}
+					Test1.Union(firstNumber, secondNumber);
+				}
+
+			} catch (IOException e) {
+				System.out.println("Error reading file: " + e.getMessage());
+				e.printStackTrace();
+			}
+
+			long endTime = System.nanoTime();
+			double delta = (endTime - startTime) / 1e6;
+
+			System.out.println("Max Tree Height: " + Test1.getMaxTreeHeight());
+			System.out.println("Array Accesses: " + Test1.arrayAccesses);
+			System.out.println("Re-visits: " + Test1.revisitConnections);
+			System.out.println("Runtime: " + delta + " ms");
+		} while (true);
+
+		scan.close();
 	}
 }
