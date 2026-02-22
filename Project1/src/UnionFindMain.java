@@ -98,7 +98,7 @@ public class UnionFindMain {
 		long endTime = System.nanoTime();
 		double delta = (endTime - startTime) / 1e6;
 		// Display the solution you discovered:
-		System.out.println("Max Tree Height: " + Test1.getMaxTreeHeight());
+		System.out.println("Max Tree Height (stored): " + Test1.getMaxTreeHeight());
 		System.out.println("Array Accesses: " + Test1.arrayAccesses);
 		System.out.println("Re-visits: " + Test1.revisitConnections);
 		System.out.println("Runtime: " + delta + " ms");

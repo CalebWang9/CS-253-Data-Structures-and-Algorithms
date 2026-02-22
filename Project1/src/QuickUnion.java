@@ -1,8 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class QuickUnion {
 	ArrayList<Node> QuickUnionArray;
@@ -38,25 +34,28 @@ public class QuickUnion {
 			return;
 		}
 		Node temp = QuickUnionArray.get(a);
-		arrayAccesses++;
+		arrayAccesses++;  // get(a)
 		Node rootA = getRoot(temp);
+		arrayAccesses++;  // get(b) for getRoot argument
 		Node rootB = getRoot(QuickUnionArray.get(b));
 		rootA.setNext(rootB);
-		arrayAccesses++;
+		arrayAccesses++;  // setNext
 
 		rootB.setHeight(Math.max(rootB.getHeight(), rootA.getHeight() + 1));
 	}
 
 	public Node getRoot(Node a) {
 		Node temp = a;
-		arrayAccesses++;
-		while (temp.getNext() != temp) {
-			temp = temp.next;
-			arrayAccesses++;
+		while (true) {
+			arrayAccesses++;  // count each getNext (including condition read)
+			Node next = temp.getNext();
+			if (next == temp) break;
+			temp = next;
 		}
 		return temp;
 	}
 
+	/** Max stored height among roots (rank in weighted variants). */
 	public int getMaxTreeHeight() {
 		int max = 0;
 		for (Node n : QuickUnionArray) {

@@ -6,21 +6,22 @@ public class WQUUFPathCompression extends WeightedQuickUnion {
     @Override
     public Node getRoot(Node a) {
         Node temp = a;
-        arrayAccesses++;
-        while (temp.getNext() != temp) {
-            temp = temp.getNext();
-            arrayAccesses++;
+        while (true) {
+            arrayAccesses++;  // count getNext
+            Node next = temp.getNext();
+            if (next == temp) break;
+            temp = next;
         }
 
         Node traveler = a;
-        arrayAccesses++;
-        while (traveler.getNext() != temp) {
+        while (true) {
+            arrayAccesses++;  // getNext
             Node parent = traveler.getNext();
+            if (parent == temp) break;
             traveler.setNext(temp);
-            arrayAccesses+=2;
+            arrayAccesses++;  // setNext
             traveler = parent;
         }
         return temp;
-
     }
 }
