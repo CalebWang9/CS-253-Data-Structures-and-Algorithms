@@ -129,15 +129,14 @@ public class QuickFind {
             e.printStackTrace();
         }
 		
-		System.out.println();
-		System.out.println(arrayAccesses);
-		System.out.println(revisitConnections);
 		
 		
 	      long endTime = System.nanoTime();
 	      double delta = (endTime - startTime) / 1e6;
-	      // Display the solution you discovered:
-	      System.out.println("\n(Time = " + delta + " milliseconds)");
+	      // Display the solution you discovered
+		  System.out.println("Array Accesses: " + arrayAccesses);
+		  System.out.println("Re-visits: " + revisitConnections);
+		  System.out.println("Runtime: " + delta + " ms");
 		 
 
 	}
