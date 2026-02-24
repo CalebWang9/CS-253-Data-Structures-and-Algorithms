@@ -24,10 +24,73 @@ public class UnionFindMain {
 
     /**
      * Runs one dataset file on a fresh UF instance and returns metrics.
+     *
+     * ufType:
+     *   0 = QuickFind
+     *   1 = QuickUnion
+     *   2 = WeightedQuickUnion
+     *   3 = WQUUFPathCompression
      */
     private static String[] runOneDataset(String ufName, int ufType, String sizeChoice, String fileChoice) {
         int n = getN(sizeChoice);
-        QuickUnion uf = null;
+        String path = DATASETS_BASE + "/" + sizeChoice + "/" + fileChoice + ".txt";
+
+        // QuickFind is implemented directly here (flat array, no tree height)
+        if (ufType == 0) {
+            long arrayAccesses = 0;
+            long revisitConnections = 0;
+            int[] quickFindArray = new int[n];
+            for (int i = 0; i < quickFindArray.length; i++) {
+                quickFindArray[i] = i;
+            }
+
+            long startTime = System.nanoTime();
+            try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    int spaceIdx = line.indexOf(' ');
+                    if (spaceIdx < 0)
+                        continue;
+                    int firstNumber = Integer.parseInt(line.substring(0, spaceIdx));
+                    int secondNumber = Integer.parseInt(line.substring(spaceIdx + 1));
+
+                    arrayAccesses += 2;
+                    if (quickFindArray[firstNumber] == quickFindArray[secondNumber]) {
+                        revisitConnections++;
+                        continue;
+                    }
+
+                    int temp = quickFindArray[firstNumber];
+                    arrayAccesses++;
+
+                    for (int j = 0; j < quickFindArray.length; j++) {
+                        arrayAccesses++;
+                        if (quickFindArray[j] == temp) {
+                            quickFindArray[j] = secondNumber;
+                            arrayAccesses++;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                return new String[] { ufName, sizeChoice, fileChoice, "ERROR", "", "", e.getMessage() };
+            }
+
+            long endTime = System.nanoTime();
+            double runtimeMs = (endTime - startTime) / 1e6;
+
+            return new String[] {
+                ufName,
+                sizeChoice,
+                fileChoice,
+                "0", // QuickFind has no tree height
+                String.valueOf(arrayAccesses),
+                String.valueOf(revisitConnections),
+                String.format("%.2f", runtimeMs)
+            };
+        }
+
+        // All QuickUnion-based structures share the same base class
+        QuickUnion uf;
         if (ufType == 1) {
             uf = new QuickUnion(n);
         } else if (ufType == 2) {
@@ -36,14 +99,13 @@ public class UnionFindMain {
             uf = new WQUUFPathCompression(n);
         }
 
-        String path = DATASETS_BASE + "/" + sizeChoice + "/" + fileChoice + ".txt";
         long startTime = System.nanoTime();
-
         try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 int spaceIdx = line.indexOf(' ');
-                if (spaceIdx < 0) continue;
+                if (spaceIdx < 0)
+                    continue;
                 int firstNumber = Integer.parseInt(line.substring(0, spaceIdx));
                 int secondNumber = Integer.parseInt(line.substring(spaceIdx + 1));
                 uf.Union(firstNumber, secondNumber);
@@ -92,6 +154,9 @@ public class UnionFindMain {
 
     public static void main(String[] args) {
         List<String[]> allRows = new ArrayList<>();
+
+        System.out.println("Running QuickFind on all datasets...");
+        allRows.addAll(testAllDatasetsOnFind("QuickFind", 0));
 
         System.out.println("Running QuickUnion on all datasets...");
         allRows.addAll(testAllDatasetsOnFind("QuickUnion", 1));
