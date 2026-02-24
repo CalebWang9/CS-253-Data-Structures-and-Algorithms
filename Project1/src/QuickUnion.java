@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class QuickUnion {
 	ArrayList<Node> QuickUnionArray;
+	int[] QuickArray;
 
 	long arrayAccesses = 0;
 	long revisitConnections = 0;
@@ -12,6 +13,12 @@ public class QuickUnion {
 			Node temp = new Node(i, null);
 			temp.setNext(temp);
 			QuickUnionArray.add(temp);
+		}
+
+		QuickArray = new int[n];
+		for (int i = 0; i < QuickArray.length; i++) {
+			QuickArray[i] = i;
+
 		}
 
 	}
@@ -34,22 +41,26 @@ public class QuickUnion {
 			return;
 		}
 		Node temp = QuickUnionArray.get(a);
-		arrayAccesses++;  // get(a)
+		arrayAccesses++; // get(a)
 		Node rootA = getRoot(temp);
-		arrayAccesses++;  // get(b) for getRoot argument
+		arrayAccesses++; // get(b) for getRoot argument
 		Node rootB = getRoot(QuickUnionArray.get(b));
 		rootA.setNext(rootB);
-		arrayAccesses++;  // setNext
+		arrayAccesses++; // setNext
 
 		rootB.setHeight(Math.max(rootB.getHeight(), rootA.getHeight() + 1));
+
+		QuickArray[rootA.getValue()] = rootB.getValue();//we stupid
+		arrayAccesses++;
 	}
 
 	public Node getRoot(Node a) {
 		Node temp = a;
 		while (true) {
-			arrayAccesses++;  // count each getNext (including condition read)
+			arrayAccesses++; // count each getNext (including condition read)
 			Node next = temp.getNext();
-			if (next == temp) break;
+			if (next == temp)
+				break;
 			temp = next;
 		}
 		return temp;

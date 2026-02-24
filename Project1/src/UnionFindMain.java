@@ -1,119 +1,113 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UnionFindMain {
+
+    private static final String[] SIZES = { "1k", "10k", "100k", "1000k" };
+    private static final String[] FILES = { "a", "b", "c", "d", "e" };
+    private static final String DATASETS_BASE = "datasets";
+
+    private static int getN(String sizeChoice) {
+        switch (sizeChoice) {
+            case "1k":   return 1000;
+            case "10k":  return 10000;
+            case "100k":  return 100000;
+            case "1000k": return 1000000;
+            default:      return 1000;
+        }
+    }
+
+    /**
+     * Runs one dataset file on a fresh UF instance and returns metrics.
+     */
+    private static String[] runOneDataset(String ufName, int ufType, String sizeChoice, String fileChoice) {
+        int n = getN(sizeChoice);
+        QuickUnion uf = null;
+        if (ufType == 1) {
+            uf = new QuickUnion(n);
+        } else if (ufType == 2) {
+            uf = new WeightedQuickUnion(n);
+        } else {
+            uf = new WQUUFPathCompression(n);
+        }
+
+        String path = DATASETS_BASE + "/" + sizeChoice + "/" + fileChoice + ".txt";
+        long startTime = System.nanoTime();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                int spaceIdx = line.indexOf(' ');
+                if (spaceIdx < 0) continue;
+                int firstNumber = Integer.parseInt(line.substring(0, spaceIdx));
+                int secondNumber = Integer.parseInt(line.substring(spaceIdx + 1));
+                uf.Union(firstNumber, secondNumber);
+            }
+        } catch (IOException e) {
+            return new String[] { ufName, sizeChoice, fileChoice, "ERROR", "", "", e.getMessage() };
+        }
+
+        long endTime = System.nanoTime();
+        double runtimeMs = (endTime - startTime) / 1e6;
+
+        return new String[] {
+            ufName,
+            sizeChoice,
+            fileChoice,
+            String.valueOf(uf.getMaxTreeHeight()),
+            String.valueOf(uf.arrayAccesses),
+            String.valueOf(uf.revisitConnections),
+            String.format("%.2f", runtimeMs)
+        };
+    }
+
+    /**
+     * Tests one Union-Find implementation on all dataset combinations (all sizes × all files).
+     */
+    private static List<String[]> testAllDatasetsOnFind(String ufName, int ufType) {
+        List<String[]> rows = new ArrayList<>();
+        for (String sizeChoice : SIZES) {
+            for (String fileChoice : FILES) {
+                System.out.println("  " + ufName + " @ " + sizeChoice + "/" + fileChoice + ".txt");
+                String[] row = runOneDataset(ufName, ufType, sizeChoice, fileChoice);
+                rows.add(row);
+            }
+        }
+        return rows;
+    }
+
+    private static void writeResultsToCsv(String path, List<String[]> allRows) throws IOException {
+        try (PrintWriter out = new PrintWriter(new FileWriter(path))) {
+            out.println("UF,Size,File,MaxTreeHeight,ArrayAccesses,RevisitConnections,RuntimeMs");
+            for (String[] row : allRows) {
+                out.println(String.join(",", row));
+            }
+        }
+    }
+
     public static void main(String[] args) {
-		Scanner scan = new Scanner(System.in);
-		String sizeChoice;
-		String fileChoice;
-		long arrayAccesses = 0;
-		long revisitConnections = 0;
+        List<String[]> allRows = new ArrayList<>();
 
-		boolean invalid = true;
+        System.out.println("Running QuickUnion on all datasets...");
+        allRows.addAll(testAllDatasetsOnFind("QuickUnion", 1));
 
-		do {
-			System.out.println("Please select which size file you want to read/run: 1k, 10k, 100k, or 1000k");
+        System.out.println("Running WeightedQuickUnion on all datasets...");
+        allRows.addAll(testAllDatasetsOnFind("WeightedQuickUnion", 2));
 
-			sizeChoice = scan.nextLine();
+        System.out.println("Running WQUUFPathCompression on all datasets...");
+        allRows.addAll(testAllDatasetsOnFind("WQUUFPathCompression", 3));
 
-			if (sizeChoice != null && (sizeChoice.equals("1k") || sizeChoice.equals("10k") || sizeChoice.equals("100k")
-					|| sizeChoice.equals("1000k"))) {
-				invalid = false;
-			}
-
-			else {
-				System.out.println("Invalid option please pick 1k, 10k, 100k, or 1000k");
-			}
-
-		} while (invalid);
-
-		boolean invalid2 = true;
-
-		do {
-			System.out.println("Please select which file you want to read/run: a, b, c, d, or e");
-
-			fileChoice = scan.nextLine();
-
-			if (fileChoice != null && (fileChoice.equals("a") || fileChoice.equals("b") || fileChoice.equals("c")
-					|| fileChoice.equals("d") || fileChoice.equals("e"))) {
-				invalid2 = false;
-			}
-
-			else {
-				System.out.println("Invalid option please pick a, b, c, d, or e");
-			}
-
-		} while (invalid2);
-
-
-		int n = 0;
-		if (sizeChoice.equals("1k")) {
-			n = 1000;
-		} else if (sizeChoice.equals("10k")) {
-			n = 10000;
-		} else if (sizeChoice.equals("100k")) {
-			n = 100000;
-		} else {
-			n = 1000000;
-		}
-
-		int ufChoice;
-		do {
-			System.out.println("which UF do you want to run? 1, 2, 3, or 0 to quit");
-			ufChoice = Integer.parseInt(scan.nextLine());
-			if (ufChoice == 0) {
-				break;
-			}
-
-			QuickUnion Test1 = null;
-			long startTime = System.nanoTime();
-			if (ufChoice == 1) {
-				Test1 = new QuickUnion(n);
-			} else if (ufChoice == 2) {
-				Test1 = new WeightedQuickUnion(n);
-			} else {
-				Test1 = new WQUUFPathCompression(n);
-			}
-
-			//QuickFind Test1 = new QuickFind(n);
-
-			try (BufferedReader reader = new BufferedReader(
-					new FileReader("datasets/" + sizeChoice + "/" + fileChoice + ".txt"))) {
-				String line;
-				String first;
-				String second;
-				int firstNumber = 0;
-				int secondNumber = 0;
-
-				while ((line = reader.readLine()) != null) {
-					for (int i = 0; i < line.length(); i++) {
-						if (line.charAt(i) == 32) {
-							first = line.substring(0, i);
-							second = line.substring(i + 1);
-							firstNumber = Integer.parseInt(first);
-							secondNumber = Integer.parseInt(second);
-							break;
-						}
-					}
-					Test1.Union(firstNumber, secondNumber);
-				}
-
-			} catch (IOException e) {
-				System.out.println("Error reading file: " + e.getMessage());
-				e.printStackTrace();
-			}
-
-			long endTime = System.nanoTime();
-			double delta = (endTime - startTime) / 1e6;
-
-			System.out.println("Max Tree Height: " + Test1.getMaxTreeHeight());
-			System.out.println("Array Accesses: " + Test1.arrayAccesses);
-			System.out.println("Re-visits: " + Test1.revisitConnections);
-			System.out.println("Runtime: " + delta + " ms");
-		} while (true);
-
-		scan.close();
-	}
+        String csvPath = "union_find_results.csv";
+        try {
+            writeResultsToCsv(csvPath, allRows);
+            System.out.println("Results written to " + csvPath);
+        } catch (IOException e) {
+            System.err.println("Failed to write CSV: " + e.getMessage());
+        }
+    }
 }
