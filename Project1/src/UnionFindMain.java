@@ -77,6 +77,8 @@ public class UnionFindMain {
 				Test1 = new WQUUFPathCompression(n);
 			}
 
+			//QuickFind Test1 = new QuickFind(n);
+
 			try (BufferedReader reader = new BufferedReader(
 					new FileReader("datasets/" + sizeChoice + "/" + fileChoice + ".txt"))) {
 				String line;
