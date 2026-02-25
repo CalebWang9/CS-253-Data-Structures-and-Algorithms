@@ -35,16 +35,17 @@ public class QuickUnion {
 	}
 
 	public void Union(int a, int b) {
-		arrayAccesses += 2;
-		if (connected(QuickUnionArray.get(a), QuickUnionArray.get(b))) {
-			revisitConnections++;
-			return;
-		}
+		
 		Node temp = QuickUnionArray.get(a);
 		arrayAccesses++; // get(a)
 		Node rootA = getRoot(temp);
 		arrayAccesses++; // get(b) for getRoot argument
 		Node rootB = getRoot(QuickUnionArray.get(b));
+		if (rootA.equals(rootB)) {
+			revisitConnections++;
+			return;
+		}
+
 		rootA.setNext(rootB);
 		arrayAccesses++; // setNext
 
