@@ -37,6 +37,15 @@
         <label><input type="checkbox" value="WeightedQuickUnion" checked> WeightedQuickUnion</label><br>
         <label><input type="checkbox" value="WQUUFPathCompression" checked> WQUUFPathCompression</label>
     </div>
+
+    <div class="checkbox-group">
+        <strong>Show Files:</strong><br>
+        <label><input type="checkbox" name="fileFilter" value="a" checked> a</label><br>
+        <label><input type="checkbox" name="fileFilter" value="b" checked> b</label><br>
+        <label><input type="checkbox" name="fileFilter" value="c" checked> c</label><br>
+        <label><input type="checkbox" name="fileFilter" value="d" checked> d</label><br>
+        <label><input type="checkbox" name="fileFilter" value="e" checked> e</label>
+    </div>
 </div>
 
 <div id="chart"></div>
@@ -47,12 +56,12 @@
 const sizeOrder = ["1k", "10k", "100k", "1000k"];
 const fileOrder = ["a", "b", "c", "d", "e"];
 
-// Per-algorithm styling (colors, line dashes, marker symbols)
+// Per-algorithm styling (colors, line dashes, marker symbols, small vertical offsets)
 const algoStyles = {
-    QuickFind:            { color: "red",    dash: "solid",  symbol: "circle" },
-    QuickUnion:           { color: "blue",   dash: "dash",   symbol: "square" },
-    WeightedQuickUnion:   { color: "green",  dash: "dot",    symbol: "triangle-up" },
-    WQUUFPathCompression: { color: "purple", dash: "dashdot",symbol: "diamond" }
+    QuickFind:            { color: "red",    dash: "solid",  symbol: "circle",       offset: -0.15 },
+    QuickUnion:           { color: "blue",   dash: "dash",   symbol: "square",       offset: -0.05 },
+    WeightedQuickUnion:   { color: "green",  dash: "dot",    symbol: "triangle-up",  offset:  0.05 },
+    WQUUFPathCompression: { color: "purple", dash: "dashdot",symbol: "diamond",      offset:  0.15 }
 };
 
 let rawData = [];
@@ -77,10 +86,18 @@ function parseCSV(text) {
     });
 }
 
-function getOrderedXLabels(data) {
+function getSelectedFiles() {
+    const checked = Array.from(
+        document.querySelectorAll("input[name=fileFilter]:checked")
+    ).map(cb => cb.value);
+    // If none are selected, fall back to all files so the chart doesn't break
+    return checked.length ? checked : fileOrder;
+}
+
+function getOrderedXLabels(selectedFiles) {
     let labels = [];
     sizeOrder.forEach(size => {
-        fileOrder.forEach(file => {
+        selectedFiles.forEach(file => {
             labels.push(`${size}-${file}`);
         });
     });
@@ -91,10 +108,14 @@ function drawChart() {
 
     const selectedStat = document.getElementById("statSelect").value;
     const checkedAlgorithms = Array.from(
-        document.querySelectorAll("input[type=checkbox]:checked")
-    ).map(cb => cb.value);
+        document.querySelectorAll("#controls input[type=checkbox]:checked")
+    )
+        .map(cb => cb.value)
+        // Filter out file letters; this list should only be algorithm names
+        .filter(v => !fileOrder.includes(v));
 
-    const xLabels = getOrderedXLabels(rawData);
+    const selectedFiles = getSelectedFiles();
+    const xLabels = getOrderedXLabels(selectedFiles);
     let traces = [];
 
     checkedAlgorithms.forEach(algo => {
@@ -102,7 +123,7 @@ function drawChart() {
         let yValues = [];
 
         sizeOrder.forEach(size => {
-            fileOrder.forEach(file => {
+            selectedFiles.forEach(file => {
                 const row = rawData.find(r =>
                     r.UF === algo &&
                     r.Size === size &&
@@ -114,10 +135,12 @@ function drawChart() {
         });
 
         const style = algoStyles[algo] || {};
+        const offset = style.offset || 0;
+        const jitteredYValues = yValues.map(v => (v === null ? null : v + offset));
 
         traces.push({
             x: xLabels,
-            y: yValues,
+            y: jitteredYValues,
             mode: "lines+markers",
             name: algo,
             line: {
@@ -149,7 +172,7 @@ function drawChart() {
 // Event listeners
 document.getElementById("statSelect").addEventListener("change", drawChart);
 
-document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+document.querySelectorAll("#controls input[type=checkbox]").forEach(cb => {
     cb.addEventListener("change", drawChart);
 });
 
