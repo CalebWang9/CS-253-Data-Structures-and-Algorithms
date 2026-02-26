@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Union-Find Visualization</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        #controls {
+            margin-bottom: 20px;
+        }
+        .checkbox-group {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Union-Find Performance Comparison</h2>
+
+<div id="controls">
+    <label><strong>Select Statistic:</strong></label>
+    <select id="statSelect">
+        <option value="MaxTreeHeight">Height</option>
+        <option value="ArrayAccesses">Accesses</option>
+        <option value="RevisitConnections">Revisits</option>
+        <option value="RuntimeMs">Runtime</option>
+    </select>
+
+    <div class="checkbox-group">
+        <strong>Show Algorithms:</strong><br>
+        <label><input type="checkbox" value="QuickFind" checked> QuickFind</label><br>
+        <label><input type="checkbox" value="QuickUnion" checked> QuickUnion</label><br>
+        <label><input type="checkbox" value="WeightedQuickUnion" checked> WeightedQuickUnion</label><br>
+        <label><input type="checkbox" value="WQUUFPathCompression" checked> WQUUFPathCompression</label>
+    </div>
+</div>
+
+<div id="chart"></div>
+
+<script>
+
+// Ordered categories
+const sizeOrder = ["1k", "10k", "100k", "1000k"];
+const fileOrder = ["a", "b", "c", "d", "e"];
+
+let rawData = [];
+
+// Load CSV file
+fetch("union_find_results.csv")
+    .then(response => response.text())
+    .then(csv => {
+        rawData = parseCSV(csv);
+        drawChart();
+    });
+
+// Simple CSV parser
+function parseCSV(text) {
+    const lines = text.trim().split("\n");
+    const headers = lines[0].split(",");
+    return lines.slice(1).map(line => {
+        const values = line.split(",");
+        let obj = {};
+        headers.forEach((h, i) => obj[h.trim()] = values[i]);
+        return obj;
+    });
+}
+
+function getOrderedXLabels(data) {
+    let labels = [];
+    sizeOrder.forEach(size => {
+        fileOrder.forEach(file => {
+            labels.push(`${size}-${file}`);
+        });
+    });
+    return labels;
+}
+
+function drawChart() {
+
+    const selectedStat = document.getElementById("statSelect").value;
+    const checkedAlgorithms = Array.from(
+        document.querySelectorAll("input[type=checkbox]:checked")
+    ).map(cb => cb.value);
+
+    const xLabels = getOrderedXLabels(rawData);
+    let traces = [];
+
+    checkedAlgorithms.forEach(algo => {
+
+        let yValues = [];
+
+        sizeOrder.forEach(size => {
+            fileOrder.forEach(file => {
+                const row = rawData.find(r =>
+                    r.UF === algo &&
+                    r.Size === size &&
+                    r.File === file
+                );
+
+                yValues.push(row ? Number(row[selectedStat]) : null);
+            });
+        });
+
+        traces.push({
+            x: xLabels,
+            y: yValues,
+            mode: "lines+markers",
+            name: algo
+        });
+    });
+
+    const layout = {
+        title: selectedStat + " Comparison",
+        xaxis: {
+            title: "Size-File",
+            tickangle: -45
+        },
+        yaxis: {
+            title: selectedStat
+        }
+    };
+
+    Plotly.newPlot("chart", traces, layout);
+}
+
+// Event listeners
+document.getElementById("statSelect").addEventListener("change", drawChart);
+
+document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", drawChart);
+});
+
+</script>
+
+</body>
+</html>
