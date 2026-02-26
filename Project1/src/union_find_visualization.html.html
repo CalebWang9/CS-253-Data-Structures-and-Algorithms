@@ -47,6 +47,14 @@
 const sizeOrder = ["1k", "10k", "100k", "1000k"];
 const fileOrder = ["a", "b", "c", "d", "e"];
 
+// Per-algorithm styling (colors, line dashes, marker symbols)
+const algoStyles = {
+    QuickFind:            { color: "red",    dash: "solid",  symbol: "circle" },
+    QuickUnion:           { color: "blue",   dash: "dash",   symbol: "square" },
+    WeightedQuickUnion:   { color: "green",  dash: "dot",    symbol: "triangle-up" },
+    WQUUFPathCompression: { color: "purple", dash: "dashdot",symbol: "diamond" }
+};
+
 let rawData = [];
 
 // Load CSV file
@@ -105,11 +113,22 @@ function drawChart() {
             });
         });
 
+        const style = algoStyles[algo] || {};
+
         traces.push({
             x: xLabels,
             y: yValues,
             mode: "lines+markers",
-            name: algo
+            name: algo,
+            line: {
+                color: style.color || undefined,
+                dash: style.dash || undefined
+            },
+            marker: {
+                symbol: style.symbol || "circle",
+                size: 8
+            },
+            opacity: 0.9
         });
     });
 
