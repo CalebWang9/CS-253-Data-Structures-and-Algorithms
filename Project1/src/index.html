@@ -67,7 +67,7 @@ const algoStyles = {
 let rawData = [];
 
 // Load CSV file
-fetch("union_find_results.csv")
+fetch("Project1/src/union_find_results.csv")
     .then(response => response.text())
     .then(csv => {
         rawData = parseCSV(csv);
