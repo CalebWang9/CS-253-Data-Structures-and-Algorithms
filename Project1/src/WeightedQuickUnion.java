@@ -27,9 +27,9 @@ public class WeightedQuickUnion extends QuickUnion {
             QuickArray[rootB.getValue()] = rootA.getValue();//we stupid
             arrayAccesses++;
         } else {
-            rootB.setNext(rootA);
-            rootA.setHeight(rootA.getHeight() + 1);
-            QuickArray[rootA.getValue()] = rootB.getValue();//we stupid
+            rootA.setNext(rootB);
+            rootB.setHeight(Math.max(rootB.getHeight(), rootA.getHeight() + 1));
+            QuickArray[rootB.getValue()] = rootA.getValue();//we stupid
             arrayAccesses++;
         }
         arrayAccesses++;
