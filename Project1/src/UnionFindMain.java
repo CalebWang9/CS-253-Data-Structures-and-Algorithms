@@ -10,7 +10,7 @@ public class UnionFindMain {
 
     private static final String[] SIZES = { "1k", "10k", "100k", "1000k" };
     private static final String[] FILES = { "a", "b", "c", "d", "e" };
-    private static final String DATASETS_BASE = "datasets";
+    private static final String DATASETS_BASE = "Project1/datasets";
 
     private static int getN(String sizeChoice) {
         switch (sizeChoice) {
@@ -155,11 +155,11 @@ public class UnionFindMain {
     public static void main(String[] args) {
         List<String[]> allRows = new ArrayList<>();
 
-        System.out.println("Running QuickFind on all datasets...");
-        allRows.addAll(testAllDatasetsOnFind("QuickFind", 0));
+        // System.out.println("Running QuickFind on all datasets...");
+        // allRows.addAll(testAllDatasetsOnFind("QuickFind", 0));
 
-        System.out.println("Running QuickUnion on all datasets...");
-        allRows.addAll(testAllDatasetsOnFind("QuickUnion", 1));
+        // System.out.println("Running QuickUnion on all datasets...");
+        // allRows.addAll(testAllDatasetsOnFind("QuickUnion", 1));
 
         System.out.println("Running WeightedQuickUnion on all datasets...");
         allRows.addAll(testAllDatasetsOnFind("WeightedQuickUnion", 2));
@@ -167,7 +167,7 @@ public class UnionFindMain {
         System.out.println("Running WQUUFPathCompression on all datasets...");
         allRows.addAll(testAllDatasetsOnFind("WQUUFPathCompression", 3));
 
-        String csvPath = "union_find_results.csv";
+        String csvPath = "Project1_W_union_find_results.csv";
         try {
             writeResultsToCsv(csvPath, allRows);
             System.out.println("Results written to " + csvPath);
