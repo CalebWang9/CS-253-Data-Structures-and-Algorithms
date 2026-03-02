@@ -10,7 +10,7 @@ public class UnionFindMain {
 
     private static final String[] SIZES = { "1k", "10k", "100k", "1000k" };
     private static final String[] FILES = { "a", "b", "c", "d", "e" };
-    private static final String DATASETS_BASE = "datasets";
+    private static final String DATASETS_BASE = "Project1/datasets";
 
     private static int getN(String sizeChoice) {
         switch (sizeChoice) {
