@@ -61,11 +61,13 @@ public class UnionFindMain {
                     }
 
                     int temp = quickFindArray[firstNumber];
-                    arrayAccesses++;
+                    int temp2 = quickFindArray[secondNumber];
+                    arrayAccesses+=2;
 
                     for (int j = 0; j < quickFindArray.length; j++) {
+                        int temp3 = quickFindArray[j];
                         arrayAccesses++;
-                        if (quickFindArray[j] == temp) {
+                        if (temp3 == temp || temp3 == temp2) {
                             quickFindArray[j] = secondNumber;
                             arrayAccesses++;
                         }
@@ -155,19 +157,19 @@ public class UnionFindMain {
     public static void main(String[] args) {
         List<String[]> allRows = new ArrayList<>();
 
-        // System.out.println("Running QuickFind on all datasets...");
-        // allRows.addAll(testAllDatasetsOnFind("QuickFind", 0));
+        System.out.println("Running QuickFind on all datasets...");
+        allRows.addAll(testAllDatasetsOnFind("QuickFind", 0));
 
         // System.out.println("Running QuickUnion on all datasets...");
         // allRows.addAll(testAllDatasetsOnFind("QuickUnion", 1));
 
-        System.out.println("Running WeightedQuickUnion on all datasets...");
-        allRows.addAll(testAllDatasetsOnFind("WeightedQuickUnion", 2));
+        // System.out.println("Running WeightedQuickUnion on all datasets...");
+        // allRows.addAll(testAllDatasetsOnFind("WeightedQuickUnion", 2));
 
-        System.out.println("Running WQUUFPathCompression on all datasets...");
-        allRows.addAll(testAllDatasetsOnFind("WQUUFPathCompression", 3));
+        // System.out.println("Running WQUUFPathCompression on all datasets...");
+        // allRows.addAll(testAllDatasetsOnFind("WQUUFPathCompression", 3));
 
-        String csvPath = "Project1_W_union_find_results.csv";
+        String csvPath = "union_find_results.csv";
         try {
             writeResultsToCsv(csvPath, allRows);
             System.out.println("Results written to " + csvPath);
