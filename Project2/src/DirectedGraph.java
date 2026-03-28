@@ -115,105 +115,100 @@ public class DirectedGraph {
 		return adj;
 	}
 
-	public static void main(String[] args) {
-		Scanner scan = new Scanner(System.in);
-		String sizeChoice;
-		String fileChoice;
+	// public static void main(String[] args) {
+	// 	Scanner scan = new Scanner(System.in);
+	// 	String sizeChoice;
+	// 	String fileChoice;
 
-		boolean invalid = true;
+	// 	boolean invalid = true;
 
-		do {
-			System.out.println("Please select which size file you want to read/run: small, medium, or large");
+	// 	do {
+	// 		System.out.println("Please select which size file you want to read/run: small, medium, or large");
 
-			sizeChoice = scan.nextLine();
+	// 		sizeChoice = scan.nextLine();
 
-			if (sizeChoice != null
-					&& (sizeChoice.equals("small") || sizeChoice.equals("medium") || sizeChoice.equals("large"))) {
-				invalid = false;
-			}
+	// 		if (sizeChoice != null
+	// 				&& (sizeChoice.equals("small") || sizeChoice.equals("medium") || sizeChoice.equals("large"))) {
+	// 			invalid = false;
+	// 		}
 
-			else {
-				System.out.println("Invalid option please pick small, medium, or large");
-			}
+	// 		else {
+	// 			System.out.println("Invalid option please pick small, medium, or large");
+	// 		}
 
-		} while (invalid);
+	// 	} while (invalid);
 
-		boolean invalid2 = true;
+	// 	boolean invalid2 = true;
 
-		do {
-			System.out.println("Please select which dataset you want to read/run: A or B");
+	// 	do {
+	// 		System.out.println("Please select which dataset you want to read/run: A or B");
 
-			fileChoice = scan.nextLine();
+	// 		fileChoice = scan.nextLine();
 
-			if (fileChoice != null && (fileChoice.equals("A") || fileChoice.equals("B"))) {
-				invalid2 = false;
-			}
+	// 		if (fileChoice != null && (fileChoice.equals("A") || fileChoice.equals("B"))) {
+	// 			invalid2 = false;
+	// 		}
 
-			else {
-				System.out.println("Invalid option please pick A or B");
-			}
+	// 		else {
+	// 			System.out.println("Invalid option please pick A or B");
+	// 		}
 
-		} while (invalid2);
+	// 	} while (invalid2);
 
-		long startTime = System.nanoTime();
+	// 	long startTime = System.nanoTime();
 
-		scan.close();
+	// 	scan.close();
 
-		DirectedGraph Test1 = new DirectedGraph(100);
+	// 	DirectedGraph Test1 = new DirectedGraph(100);
 
-		try (BufferedReader reader = new BufferedReader(
-				new FileReader("Project2/dataset/dataset " + fileChoice + "/" + sizeChoice + ".txt"))) { //
-			String line;
-			String first;
-			String second;
-			int firstNumber = 0;
-			int secondNumber = 0;
+	// 	try (BufferedReader reader = new BufferedReader(
+	// 			new FileReader("Project2/dataset/dataset " + fileChoice + "/" + sizeChoice + ".txt"))) { //
+	// 		String line;
+	// 		String first;
+	// 		String second;
+	// 		int firstNumber = 0;
+	// 		int secondNumber = 0;
 
-			while ((line = reader.readLine()) != null) {
-				for (int i = 0; i < line.length(); i++) {
-					if (line.charAt(i) == 32) {
-						int spaceIndex = i;
-						first = line.substring(0, i);
-						second = line.substring(i + 1);
-						firstNumber = Integer.parseInt(first);
-						secondNumber = Integer.parseInt(second);
+	// 		while ((line = reader.readLine()) != null) {
+	// 			for (int i = 0; i < line.length(); i++) {
+	// 				if (line.charAt(i) == 32) {
+	// 					int spaceIndex = i;
+	// 					first = line.substring(0, i);
+	// 					second = line.substring(i + 1);
+	// 					firstNumber = Integer.parseInt(first);
+	// 					secondNumber = Integer.parseInt(second);
 
-						break;
-					}
-				}
+	// 					break;
+	// 				}
+	// 			}
 
-				Test1.addEdge(Test1.new Node(firstNumber, null), Test1.new Node(secondNumber, null));
+	// 			Test1.addEdge(Test1.new Node(firstNumber, null), Test1.new Node(secondNumber, null));
 
-			}
+	// 		}
 
-		} catch (IOException e) {
-			System.out.println("Error reading file: " + e.getMessage());
-			e.printStackTrace();
-		}
+	// 	} catch (IOException e) {
+	// 		System.out.println("Error reading file: " + e.getMessage());
+	// 		e.printStackTrace();
+	// 	}
 
-		// Test1.reverseGraph();
+	// 	Test1.reverseGraph();
 
-		ArrayList<Node> temp = Test1.getAllVertices();
-		for (int i = 0; i < temp.size(); i++) {
-			Node temp2 = temp.get(i);
-			while (temp2 != null) {
-				System.out.print(temp2.getValue() + " ");
-				temp2 = temp2.next;
-			}
-			System.out.println();
-		}
+	// 	ArrayList<Node> temp = Test1.getAllVertices();
+	// 	for (int i = 0; i < temp.size(); i++) {
+	// 		Node temp2 = temp.get(i);
+	// 		while (temp2 != null) {
+	// 			System.out.print(temp2.getValue() + " ");
+	// 			temp2 = temp2.getNext();
+	// 		}
+	// 		System.out.println();
+	// 	}
 
-		long endTime = System.nanoTime();
-		double delta = (endTime - startTime) / 1e6;
-		System.out.println("Runtime: " + delta + " ms");
+	// 	long endTime = System.nanoTime();
+	// 	double delta = (endTime - startTime) / 1e6;
+	// 	System.out.println("Runtime: " + delta + " ms");
 
-		pageRank pr = new pageRank(Test1);
 
-		for (int i = 0; i < pr.pr1.length; i++) {
-			System.out.println("Page Rank of node " + i + " is " + pr.pr1[i]);
-		}
-
-	}
+	// }
 
 	public class Node {
 		private Node next;
