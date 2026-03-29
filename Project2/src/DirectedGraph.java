@@ -41,10 +41,10 @@ public class DirectedGraph {
 		for (Node n: adj) {
 			Node temp = getNeighbors(n);
 			while (temp != null) {
-				temp = temp.next;
 				if (temp.getValue() == v.getValue()) {
 					counter++;
 				}
+				temp = temp.next;
 			}
 		}
 		return counter;

@@ -95,5 +95,9 @@ public class GraphMain {
 		for (int i = 0; i < pr.pr2.length; i++) {
 			System.out.println("Page Rank of node " + i + " is " + pr.pr2[i]);
 		}
+
+		System.out.println("number of iterations: "+pr.iterationsOfPR);
+
+		pr.getTopten();
 	}
 }
