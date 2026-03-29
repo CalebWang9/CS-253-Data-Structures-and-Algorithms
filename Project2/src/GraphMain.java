@@ -92,8 +92,8 @@ public class GraphMain {
 
 		pageRank pr = new pageRank(Test1);
 
-		for (int i = 0; i < pr.pr1.length; i++) {
-			System.out.println("Page Rank of node " + i + " is " + pr.pr1[i]);
+		for (int i = 0; i < pr.pr2.length; i++) {
+			System.out.println("Page Rank of node " + i + " is " + pr.pr2[i]);
 		}
 	}
 }
