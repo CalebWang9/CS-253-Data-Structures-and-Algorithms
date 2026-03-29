@@ -65,6 +65,17 @@ public class GraphMain {
             System.out.println("Error reading file: " + e.getMessage());
         }
 
+
+        ArrayList<DirectedGraph.Node> temp = Test1.getAllVertices();
+		for (int i = 0; i < temp.size(); i++) {
+			DirectedGraph.Node temp2 = temp.get(i);
+			while (temp2 != null) {
+				System.out.print(temp2.getValue() + " ");
+				temp2 = temp2.getNext();
+			}
+			System.out.println();
+		}
+
         // Run the algorithm
         pageRank pr = new pageRank(Test1);
 
