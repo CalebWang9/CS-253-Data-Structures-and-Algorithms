@@ -54,7 +54,7 @@
 </head>
 <body>
   <h1>Project 2 — CSV report dashboard</h1>
-  <p class="note">Load <code>project2_report.csv</code> (output from <code>Project2ReportMain</code>). Browsers block automatic file reads from disk; use the file picker below. If you serve this folder over HTTP, you can add <code>?url=project2_report.csv</code> to the page URL.</p>
+  <p class="note">Load <code>project2_report.csv</code> (output from <code>Project2ReportMain</code>). Browsers block automatic file reads from disk; use the file picker below. If you serve this folder over HTTP, you can add <code>?url=project2_report.csv</code> to the page URL. <strong>Y-axes use a logarithmic scale</strong> (values must be positive; zeros appear as gaps).</p>
 
   <div class="load-row">
     <label><strong>CSV file:</strong> <input type="file" id="csvFile" accept=".csv,text/csv" /></label>
@@ -172,6 +172,20 @@
     };
   }
 
+  /** Y-axis config: logarithmic (values must be positive; use null to skip bars). */
+  function yAxisLog(axisTitle) {
+    return {
+      type: 'logarithmic',
+      title: { display: true, text: axisTitle + ' (log scale)', color: '#8b9cb3' },
+      ticks: { color: '#8b9cb3' }
+    };
+  }
+
+  function prForLog(v) {
+    if (v == null || isNaN(v)) return null;
+    return v > 0 ? v : 1e-15;
+  }
+
   function ingestCSV(text) {
     const rows = parseCSV(text);
     if (rows.length < 2) return {};
@@ -199,6 +213,7 @@
         if (f1 === 'pagerank_iterations') d.iterations = parseInt(f2, 10);
         else if (f1 === 'total_sccs') d.summary.total_sccs = parseInt(f2, 10);
         else if (f1 === 'largest_scc_size') d.summary.largest_scc_size = parseInt(f2, 10);
+        else if (f1 === 'largest_scc_members') d.summary.largest_scc_members = f2;
         else if (f1 === 'count_sccs_size_ge_k') {
           const km = (f3 || '').match(/k=(\d+)/);
           if (km) d.countGeK[km[1]] = parseInt(f2, 10);
@@ -275,7 +290,7 @@
     if (mode === 'iter') {
       const data = enabled.map(f => {
         const v = dataByFile[f]?.iterations;
-        return v != null && !isNaN(v) ? v : 0;
+        return v != null && !isNaN(v) && v > 0 ? v : null;
       });
       chartPR = new Chart(document.getElementById('chartPageRank'), {
         type: 'bar',
@@ -286,10 +301,21 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#c5d1de' } } },
+          plugins: {
+            legend: { labels: { color: '#c5d1de' } },
+            tooltip: {
+              callbacks: {
+                label(ctx) {
+                  const v = ctx.raw;
+                  if (v == null) return '—';
+                  return 'Iterations: ' + v;
+                }
+              }
+            }
+          },
           scales: {
             x: { ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
-            y: { beginAtZero: true, ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Iterations', color: '#8b9cb3' } }
+            y: Object.assign({ min: 0.5 }, yAxisLog('Iterations'))
           }
         }
       });
@@ -304,7 +330,8 @@
         if (!d || !d.top10) return null;
         const row = d.top10.find(t => t.rank === r + 1);
         if (!row) return null;
-        return mode === 'pr' ? row.pr : row.inDeg;
+        const raw = mode === 'pr' ? row.pr : row.inDeg;
+        return prForLog(raw);
       });
       datasets.push({
         label: rankLabels[r],
@@ -328,9 +355,15 @@
               label(ctx) {
                 const v = ctx.raw;
                 if (v == null) return ctx.dataset.label + ': —';
-                return mode === 'pr'
-                  ? `${ctx.dataset.label}: ${Number(v).toExponential(4)}`
-                  : `${ctx.dataset.label}: ${v}`;
+                const f = enabled[ctx.dataIndex];
+                const d = dataByFile[f];
+                const row = d && d.top10 ? d.top10.find(t => t.rank === ctx.datasetIndex + 1) : null;
+                const raw = row ? (mode === 'pr' ? row.pr : row.inDeg) : v;
+                const nodePart = row != null ? ` node ${row.node}` : '';
+                if (mode === 'pr') {
+                  return `${ctx.dataset.label}${nodePart}: ${Number(raw).toExponential(6)}`;
+                }
+                return `${ctx.dataset.label}${nodePart}: ${raw}`;
               }
             }
           }
@@ -341,15 +374,10 @@
             ticks: { color: '#8b9cb3', maxRotation: 45 },
             title: { display: true, text: 'Dataset', color: '#8b9cb3' }
           },
-          y: {
-            beginAtZero: mode === 'indeg',
-            ticks: { color: '#8b9cb3' },
-            title: {
-              display: true,
-              text: mode === 'pr' ? 'PageRank' : 'In-degree',
-              color: '#8b9cb3'
-            }
-          }
+          y: Object.assign(
+            { min: mode === 'pr' ? 1e-6 : 0.5 },
+            yAxisLog(mode === 'pr' ? 'PageRank' : 'In-degree')
+          )
         }
       }
     });
@@ -376,10 +404,11 @@
       const labels = enabled.map(fileToLabel);
       const data = enabled.map(f => {
         const d = dataByFile[f];
-        if (!d) return 0;
-        return mode === 'total'
+        if (!d) return null;
+        const v = mode === 'total'
           ? (d.summary.total_sccs ?? 0)
           : (d.summary.largest_scc_size ?? 0);
+        return v > 0 ? v : null;
       });
       chartScc = new Chart(document.getElementById('chartScc'), {
         type: 'bar',
@@ -394,14 +423,35 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: true } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label(ctx) {
+                  const f = enabled[ctx.dataIndex];
+                  const d = dataByFile[f];
+                  if (!d) return '';
+                  if (mode === 'total') {
+                    return 'Total SCCs: ' + (d.summary.total_sccs ?? '—');
+                  }
+                  const sz = d.summary.largest_scc_size;
+                  return 'Largest SCC size: ' + (sz != null ? sz : '—');
+                },
+                afterLabel(ctx) {
+                  if (mode !== 'largest') return '';
+                  const f = enabled[ctx.dataIndex];
+                  const mem = dataByFile[f]?.summary?.largest_scc_members;
+                  if (!mem || String(mem).trim() === '') return '';
+                  const pretty = String(mem).split(';').join(', ');
+                  return 'Nodes in largest SCC: ' + pretty;
+                }
+              }
+            }
+          },
           scales: {
             x: { ticks: { color: '#8b9cb3', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
-            y: {
-              beginAtZero: true,
-              ticks: { color: '#8b9cb3' },
-              title: { display: true, text: mode === 'total' ? 'Count' : 'Size', color: '#8b9cb3' }
-            }
+            y: Object.assign({ min: 0.5 }, yAxisLog(mode === 'total' ? 'Count' : 'Size'))
           }
         }
       });
@@ -413,9 +463,9 @@
       const labels = enabled.map(fileToLabel);
       const data = enabled.map(f => {
         const d = dataByFile[f];
-        if (!d || !d.countGeK) return 0;
+        if (!d || !d.countGeK) return null;
         const v = d.countGeK[k];
-        return v != null ? v : 0;
+        return v != null && v > 0 ? v : null;
       });
       chartScc = new Chart(document.getElementById('chartScc'), {
         type: 'bar',
@@ -430,10 +480,20 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#c5d1de' } } },
+          plugins: {
+            legend: { labels: { color: '#c5d1de' } },
+            tooltip: {
+              callbacks: {
+                label(ctx) {
+                  const v = ctx.raw;
+                  return v == null ? 'Count: 0' : 'Count: ' + v;
+                }
+              }
+            }
+          },
           scales: {
             x: { ticks: { color: '#8b9cb3', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
-            y: { beginAtZero: true, ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Count', color: '#8b9cb3' } }
+            y: Object.assign({ min: 0.5 }, yAxisLog('Count'))
           }
         }
       });
@@ -462,7 +522,10 @@
       }
       return {
         label: fileToLabel(f),
-        data: sizeLabels.map(s => counts[s] || 0),
+        data: sizeLabels.map(s => {
+          const c = counts[s] || 0;
+          return c > 0 ? c : null;
+        }),
         backgroundColor: colors[di % colors.length] + 'cc',
         borderColor: colors[di % colors.length],
         borderWidth: 1
@@ -480,7 +543,22 @@
         maintainAspectRatio: false,
         plugins: {
           legend: { position: 'bottom', labels: { color: '#c5d1de', boxWidth: 12 } },
-          title: { display: true, text: 'SCCs per component size (segmented)', color: '#c5d1de', font: { size: 14 } }
+          title: { display: true, text: 'SCCs per component size (segmented)', color: '#c5d1de', font: { size: 14 } },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                const f = enabled[ctx.datasetIndex];
+                const d = dataByFile[f];
+                const lab = ctx.chart?.data?.labels?.[ctx.dataIndex];
+                const sz = parseInt(lab != null ? lab : ctx.label, 10);
+                let c = 0;
+                if (d && d.sccs) {
+                  d.sccs.forEach(s => { if (s.size === sz) c++; });
+                }
+                return ctx.dataset.label + ' @ size ' + sz + ': ' + c;
+              }
+            }
+          }
         },
         scales: {
           x: {
@@ -488,12 +566,7 @@
             ticks: { color: '#8b9cb3', maxRotation: 60, autoSkip: true, maxTicksLimit: 40 },
             title: { display: true, text: 'SCC size', color: '#8b9cb3' }
           },
-          y: {
-            beginAtZero: true,
-            stacked: false,
-            ticks: { color: '#8b9cb3' },
-            title: { display: true, text: 'Number of SCCs', color: '#8b9cb3' }
-          }
+          y: Object.assign({ min: 0.5 }, yAxisLog('Number of SCCs'))
         }
       }
     });
