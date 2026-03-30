@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project 2 — Report Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #5b9fd4;
+      --border: #2d3a4d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1.25rem 1.5rem 3rem;
+      line-height: 1.45;
+    }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 0.5rem; }
+    h2 { font-size: 1.05rem; font-weight: 600; margin: 2rem 0 0.75rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.35rem; }
+    p.note { color: var(--muted); font-size: 0.88rem; margin: 0 0 1rem; }
+    .load-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;
+      background: var(--panel); padding: 1rem 1.1rem; border-radius: 8px; border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .load-row input[type="file"] { font-size: 0.85rem; }
+    .status { font-size: 0.85rem; color: var(--muted); }
+    .status.ok { color: #7dcea0; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: flex-start;
+      background: var(--panel); padding: 1rem 1.1rem; border-radius: 8px; border: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .control-block label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.35rem; }
+    .datasets { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+    .datasets label { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; text-transform: none; color: var(--text); cursor: pointer; }
+    select, input[type="number"] {
+      background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.6rem; font-size: 0.9rem;
+    }
+    .chart-wrap {
+      position: relative; height: 420px; max-width: 100%;
+      background: var(--panel); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);
+    }
+    .chart-wrap.tall { height: 480px; }
+  </style>
+</head>
+<body>
+  <h1>Project 2 — CSV report dashboard</h1>
+  <p class="note">Load <code>project2_report.csv</code> (output from <code>Project2ReportMain</code>). Browsers block automatic file reads from disk; use the file picker below. If you serve this folder over HTTP, you can add <code>?url=project2_report.csv</code> to the page URL.</p>
+
+  <div class="load-row">
+    <label><strong>CSV file:</strong> <input type="file" id="csvFile" accept=".csv,text/csv" /></label>
+    <span class="status" id="loadStatus">No file loaded.</span>
+  </div>
+
+  <h2>PageRank</h2>
+  <p class="note">X-axis: enabled datasets. <em>Iterations</em>: one bar per dataset. <em>Top 10</em>: grouped bars per dataset (Rank 1 … Rank 10).</p>
+  <div class="controls" id="prControls">
+    <div class="control-block">
+      <label>Datasets (toggle)</label>
+      <div class="datasets" id="prDatasetToggles"></div>
+    </div>
+    <div class="control-block">
+      <label>Y-axis</label>
+      <select id="prYMode">
+        <option value="pr">Top 10 PageRank scores</option>
+        <option value="indeg">Top 10 in-degree scores</option>
+        <option value="iter">Number of iterations to converge</option>
+      </select>
+    </div>
+  </div>
+  <div class="chart-wrap tall"><canvas id="chartPageRank"></canvas></div>
+
+  <h2>Strongly connected components (SCC)</h2>
+  <p class="note">Toggle datasets; pick what the Y-axis represents. <em>Size distribution</em> counts SCCs per component size (from raw <code>scc</code> rows). <em>Count with size ≥ k</em> uses summary counts for k = 1…5.</p>
+  <div class="controls" id="sccControls">
+    <div class="control-block">
+      <label>Datasets (toggle)</label>
+      <div class="datasets" id="sccDatasetToggles"></div>
+    </div>
+    <div class="control-block">
+      <label>Y-axis mode</label>
+      <select id="sccYMode">
+        <option value="total">Total number of SCCs</option>
+        <option value="largest">Size of largest SCC</option>
+        <option value="dist">All SCCs segmented by size (histogram)</option>
+        <option value="gek">Count of SCCs with size ≥ k</option>
+      </select>
+    </div>
+    <div class="control-block" id="sccKBlock" style="display:none;">
+      <label>k (minimum SCC size)</label>
+      <select id="sccK">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
+  </div>
+  <div class="chart-wrap tall"><canvas id="chartScc"></canvas></div>
+
+  <script>
+(function () {
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#8b9cb3';
+    Chart.defaults.borderColor = '#3d4f66';
+  }
+
+  const ALL_FILES = [
+    'Project2/dataset/dataset A/small.txt',
+    'Project2/dataset/dataset A/medium.txt',
+    'Project2/dataset/dataset A/large.txt',
+    'Project2/dataset/dataset B/small.txt',
+    'Project2/dataset/dataset B/medium.txt',
+    'Project2/dataset/dataset B/large.txt'
+  ];
+
+  function fileToLabel(path) {
+    const m = String(path).match(/dataset ([AB])\/(\w+)\.txt/i);
+    if (m) return `Dataset ${m[1]} · ${m[2]}`;
+    const m2 = String(path).match(/dataset ([AB])\/(\w+)\.txt$/i);
+    if (m2) return `Dataset ${m2[1]} · ${m2[2]}`;
+    return path.replace(/^.*\//, '');
+  }
+
+  /** RFC-style CSV row split (handles quoted fields) */
+  function parseCSV(text) {
+    const rows = [];
+    let field = '';
+    let row = [];
+    let inQ = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQ = false;
+        } else field += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n' || (c === '\r' && text[i + 1] === '\n')) {
+          if (c === '\r') i++;
+          row.push(field);
+          if (row.some(cell => cell.length > 0) || row.length > 1) rows.push(row);
+          row = [];
+          field = '';
+        } else if (c !== '\r') field += c;
+      }
+    }
+    row.push(field);
+    if (row.some(cell => cell.length > 0)) rows.push(row);
+    return rows;
+  }
+
+  function emptyDataset() {
+    return {
+      summary: {},
+      sccs: [],
+      countGeK: {},
+      top10: [],
+      iterations: null
+    };
+  }
+
+  function ingestCSV(text) {
+    const rows = parseCSV(text);
+    if (rows.length < 2) return {};
+    const header = rows[0].map(h => h.trim());
+    const idx = (name) => header.indexOf(name);
+    const iType = idx('record_type');
+    const iFile = idx('file');
+    const i1 = idx('field_1');
+    const i2 = idx('field_2');
+    const i3 = idx('field_3');
+    const i4 = idx('field_4');
+    const byFile = {};
+
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r];
+      if (row.length < 5) continue;
+      const type = row[iType];
+      const file = row[iFile];
+      if (!file) continue;
+      if (!byFile[file]) byFile[file] = emptyDataset();
+      const d = byFile[file];
+      const f1 = row[i1] || '', f2 = row[i2] || '', f3 = row[i3] || '', f4 = row[i4] || '';
+
+      if (type === 'summary') {
+        if (f1 === 'pagerank_iterations') d.iterations = parseInt(f2, 10);
+        else if (f1 === 'total_sccs') d.summary.total_sccs = parseInt(f2, 10);
+        else if (f1 === 'largest_scc_size') d.summary.largest_scc_size = parseInt(f2, 10);
+        else if (f1 === 'count_sccs_size_ge_k') {
+          const km = (f3 || '').match(/k=(\d+)/);
+          if (km) d.countGeK[km[1]] = parseInt(f2, 10);
+        }
+      } else if (type === 'scc') {
+        d.sccs.push({ index: parseInt(f1, 10), size: parseInt(f2, 10) });
+      } else if (type === 'top10_pagerank') {
+        d.top10.push({
+          rank: parseInt(f1, 10),
+          node: parseInt(f2, 10),
+          pr: parseFloat(f3),
+          inDeg: parseInt(f4, 10)
+        });
+      }
+    }
+
+    for (const file of Object.keys(byFile)) {
+      byFile[file].top10.sort((a, b) => a.rank - b.rank);
+    }
+    return byFile;
+  }
+
+  let dataByFile = {};
+  let chartPR = null;
+  let chartScc = null;
+
+  const colors = [
+    '#5b9fd4', '#7dcea0', '#f4d03f', '#eb984e', '#af7ac5', '#76d7c4',
+    '#ec7063', '#5dade2', '#58d68d', '#f5b041'
+  ];
+
+  function getEnabledFiles(containerId) {
+    const box = document.getElementById(containerId);
+    const inputs = box.querySelectorAll('input[type="checkbox"]');
+    const out = [];
+    inputs.forEach(inp => { if (inp.checked) out.push(inp.dataset.file); });
+    return out;
+  }
+
+  function buildDatasetToggles(containerId, onChange) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    ALL_FILES.forEach((f, i) => {
+      const id = containerId + '_' + i;
+      const wrap = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+      cb.dataset.file = f;
+      cb.id = id;
+      cb.addEventListener('change', onChange);
+      wrap.appendChild(cb);
+      wrap.appendChild(document.createTextNode(' ' + fileToLabel(f)));
+      el.appendChild(wrap);
+    });
+  }
+
+  function updatePageRankChart() {
+    const enabled = getEnabledFiles('prDatasetToggles');
+    const mode = document.getElementById('prYMode').value;
+    const labels = enabled.map(fileToLabel);
+
+    if (chartPR) chartPR.destroy();
+
+    if (enabled.length === 0) {
+      chartPR = new Chart(document.getElementById('chartPageRank'), {
+        type: 'bar',
+        data: { labels: ['—'], datasets: [{ data: [0], label: 'No dataset' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#c5d1de' } } }, scales: { x: { ticks: { color: '#8b9cb3' } }, y: { ticks: { color: '#8b9cb3' } } } }
+      });
+      return;
+    }
+
+    if (mode === 'iter') {
+      const data = enabled.map(f => {
+        const v = dataByFile[f]?.iterations;
+        return v != null && !isNaN(v) ? v : 0;
+      });
+      chartPR = new Chart(document.getElementById('chartPageRank'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'Iterations to converge', data, backgroundColor: colors[0] }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#c5d1de' } } },
+          scales: {
+            x: { ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
+            y: { beginAtZero: true, ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Iterations', color: '#8b9cb3' } }
+          }
+        }
+      });
+      return;
+    }
+
+    const rankLabels = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10'];
+    const datasets = [];
+    for (let r = 0; r < 10; r++) {
+      const data = enabled.map(f => {
+        const d = dataByFile[f];
+        if (!d || !d.top10) return null;
+        const row = d.top10.find(t => t.rank === r + 1);
+        if (!row) return null;
+        return mode === 'pr' ? row.pr : row.inDeg;
+      });
+      datasets.push({
+        label: rankLabels[r],
+        data,
+        backgroundColor: colors[r % colors.length],
+        borderColor: colors[r % colors.length],
+        borderWidth: 1
+      });
+    }
+
+    chartPR = new Chart(document.getElementById('chartPageRank'), {
+      type: 'bar',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#c5d1de', boxWidth: 12 } },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                const v = ctx.raw;
+                if (v == null) return ctx.dataset.label + ': —';
+                return mode === 'pr'
+                  ? `${ctx.dataset.label}: ${Number(v).toExponential(4)}`
+                  : `${ctx.dataset.label}: ${v}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: false,
+            ticks: { color: '#8b9cb3', maxRotation: 45 },
+            title: { display: true, text: 'Dataset', color: '#8b9cb3' }
+          },
+          y: {
+            beginAtZero: mode === 'indeg',
+            ticks: { color: '#8b9cb3' },
+            title: {
+              display: true,
+              text: mode === 'pr' ? 'PageRank' : 'In-degree',
+              color: '#8b9cb3'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function updateSccChart() {
+    const enabled = getEnabledFiles('sccDatasetToggles');
+    const mode = document.getElementById('sccYMode').value;
+    const kBlock = document.getElementById('sccKBlock');
+    kBlock.style.display = mode === 'gek' ? 'block' : 'none';
+
+    if (chartScc) chartScc.destroy();
+
+    if (enabled.length === 0) {
+      chartScc = new Chart(document.getElementById('chartScc'), {
+        type: 'bar',
+        data: { labels: ['—'], datasets: [{ data: [0] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      return;
+    }
+
+    if (mode === 'total' || mode === 'largest') {
+      const labels = enabled.map(fileToLabel);
+      const data = enabled.map(f => {
+        const d = dataByFile[f];
+        if (!d) return 0;
+        return mode === 'total'
+          ? (d.summary.total_sccs ?? 0)
+          : (d.summary.largest_scc_size ?? 0);
+      });
+      chartScc = new Chart(document.getElementById('chartScc'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: mode === 'total' ? 'Total SCCs' : 'Largest SCC size',
+            data,
+            backgroundColor: enabled.map((_, i) => colors[i % colors.length])
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: true } },
+          scales: {
+            x: { ticks: { color: '#8b9cb3', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#8b9cb3' },
+              title: { display: true, text: mode === 'total' ? 'Count' : 'Size', color: '#8b9cb3' }
+            }
+          }
+        }
+      });
+      return;
+    }
+
+    if (mode === 'gek') {
+      const k = document.getElementById('sccK').value;
+      const labels = enabled.map(fileToLabel);
+      const data = enabled.map(f => {
+        const d = dataByFile[f];
+        if (!d || !d.countGeK) return 0;
+        const v = d.countGeK[k];
+        return v != null ? v : 0;
+      });
+      chartScc = new Chart(document.getElementById('chartScc'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'SCCs with size ≥ ' + k,
+            data,
+            backgroundColor: enabled.map((_, i) => colors[i % colors.length])
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#c5d1de' } } },
+          scales: {
+            x: { ticks: { color: '#8b9cb3', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
+            y: { beginAtZero: true, ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Count', color: '#8b9cb3' } }
+          }
+        }
+      });
+      return;
+    }
+
+    // mode === 'dist' — histogram: SCC size -> count, grouped by dataset
+    const sizeSet = new Set();
+    enabled.forEach(f => {
+      const d = dataByFile[f];
+      if (d && d.sccs) d.sccs.forEach(s => sizeSet.add(s.size));
+    });
+    const sizeLabels = Array.from(sizeSet).sort((a, b) => a - b);
+    if (sizeLabels.length > 200) {
+      sizeLabels.length = 200;
+    }
+
+    const datasets = enabled.map((f, di) => {
+      const d = dataByFile[f];
+      const counts = {};
+      sizeLabels.forEach(s => { counts[s] = 0; });
+      if (d && d.sccs) {
+        d.sccs.forEach(s => {
+          if (counts[s.size] !== undefined) counts[s.size]++;
+        });
+      }
+      return {
+        label: fileToLabel(f),
+        data: sizeLabels.map(s => counts[s] || 0),
+        backgroundColor: colors[di % colors.length] + 'cc',
+        borderColor: colors[di % colors.length],
+        borderWidth: 1
+      };
+    });
+
+    chartScc = new Chart(document.getElementById('chartScc'), {
+      type: 'bar',
+      data: {
+        labels: sizeLabels.map(String),
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#c5d1de', boxWidth: 12 } },
+          title: { display: true, text: 'SCCs per component size (segmented)', color: '#c5d1de', font: { size: 14 } }
+        },
+        scales: {
+          x: {
+            stacked: false,
+            ticks: { color: '#8b9cb3', maxRotation: 60, autoSkip: true, maxTicksLimit: 40 },
+            title: { display: true, text: 'SCC size', color: '#8b9cb3' }
+          },
+          y: {
+            beginAtZero: true,
+            stacked: false,
+            ticks: { color: '#8b9cb3' },
+            title: { display: true, text: 'Number of SCCs', color: '#8b9cb3' }
+          }
+        }
+      }
+    });
+  }
+
+  function onDataLoaded(text, name) {
+    dataByFile = ingestCSV(text);
+    const keys = Object.keys(dataByFile);
+    const status = document.getElementById('loadStatus');
+    if (keys.length === 0) {
+      status.textContent = 'Could not parse rows from ' + (name || 'file') + '.';
+      status.className = 'status';
+      return;
+    }
+    status.textContent = 'Loaded ' + keys.length + ' dataset(s) from ' + (name || 'CSV') + '.';
+    status.className = 'status ok';
+    updatePageRankChart();
+    updateSccChart();
+  }
+
+  document.getElementById('csvFile').addEventListener('change', function (e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => onDataLoaded(reader.result, f.name);
+    reader.readAsText(f);
+  });
+
+  document.getElementById('prYMode').addEventListener('change', updatePageRankChart);
+  document.getElementById('sccYMode').addEventListener('change', updateSccChart);
+  document.getElementById('sccK').addEventListener('change', updateSccChart);
+
+  buildDatasetToggles('prDatasetToggles', updatePageRankChart);
+  buildDatasetToggles('sccDatasetToggles', updateSccChart);
+
+  const params = new URLSearchParams(location.search);
+  const urlParam = params.get('url');
+  if (urlParam) {
+    fetch(urlParam)
+      .then(r => r.text())
+      .then(t => onDataLoaded(t, urlParam))
+      .catch(() => {
+        document.getElementById('loadStatus').textContent = 'Fetch failed for ' + urlParam + ' (try file picker or a local server).';
+      });
+  }
+})();
+  </script>
+</body>
+</html>
