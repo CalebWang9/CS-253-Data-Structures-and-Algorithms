@@ -251,7 +251,7 @@ public class DirectedGraph {
 
         DirectedGraph Test1 = new DirectedGraph(1);
 
-        try (BufferedReader reader = new BufferedReader(new FileReader("dataset/dataset " + fileChoice + "/" + sizeChoice + ".txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("Project2/dataset/dataset " + fileChoice + "/" + sizeChoice + ".txt"))) {
             String line = reader.readLine();
             if (line == null) return;
             
@@ -319,15 +319,7 @@ public class DirectedGraph {
 		}
 
         // Run the algorithm
-        pageRank pr = new pageRank(Test1);
-
-		for (int i = 0; i < pr.pr2.length; i++) {
-			System.out.println("Page Rank of node " + i + " is " + pr.pr2[i]);
-		}
-
-		System.out.println("number of iterations: "+pr.iterationsOfPR);
-
-		pr.getTopten();
+        
     }
 
 	public class Node {
