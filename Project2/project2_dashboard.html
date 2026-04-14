@@ -10,8 +10,8 @@
     :root {
       --bg: #0f1419;
       --panel: #1a2332;
-      --text: #e7ecf3;
-      --muted: #8b9cb3;
+      --text: #ffffff;
+      --muted: #ffffff;
       --accent: #5b9fd4;
       --border: #2d3a4d;
     }
@@ -112,7 +112,7 @@
   <script>
 (function () {
   if (typeof Chart !== 'undefined') {
-    Chart.defaults.color = '#8b9cb3';
+    Chart.defaults.color = '#ffffff';
     Chart.defaults.borderColor = '#3d4f66';
     if (typeof ChartDataLabels !== 'undefined') {
       Chart.register(ChartDataLabels);
@@ -180,8 +180,8 @@
   function yAxisLog(axisTitle) {
     return {
       type: 'logarithmic',
-      title: { display: true, text: axisTitle + ' (log scale)', color: '#8b9cb3' },
-      ticks: { color: '#8b9cb3' }
+      title: { display: true, text: axisTitle + ' (log scale)', color: '#ffffff' },
+      ticks: { color: '#ffffff' }
     };
   }
 
@@ -286,7 +286,7 @@
       chartPR = new Chart(document.getElementById('chartPageRank'), {
         type: 'bar',
         data: { labels: ['—'], datasets: [{ data: [0], label: 'No dataset' }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#c5d1de' } } }, scales: { x: { ticks: { color: '#8b9cb3' } }, y: { ticks: { color: '#8b9cb3' } } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#ffffff' } } }, scales: { x: { ticks: { color: '#ffffff' } }, y: { ticks: { color: '#ffffff' } } } }
       });
       return;
     }
@@ -307,7 +307,7 @@
           maintainAspectRatio: false,
           plugins: {
             datalabels: { display: false },
-            legend: { labels: { color: '#c5d1de' } },
+            legend: { labels: { color: '#ffffff' } },
             tooltip: {
               callbacks: {
                 label(ctx) {
@@ -319,7 +319,7 @@
             }
           },
           scales: {
-            x: { ticks: { color: '#8b9cb3' }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
+            x: { ticks: { color: '#ffffff' }, title: { display: true, text: 'Dataset', color: '#ffffff' } },
             y: Object.assign({ min: 0.5 }, yAxisLog('Iterations'))
           }
         }
@@ -363,7 +363,7 @@
         plugins: {
           datalabels: {
             display: true,
-            color: '#c8d4e6',
+            color: '#ffffff',
             align: 'end',
             anchor: 'end',
             offset: 1,
@@ -379,7 +379,7 @@
             },
             font: { size: labelFontSize, weight: '500', family: 'system-ui,Segoe UI,sans-serif' }
           },
-          legend: { position: 'bottom', labels: { color: '#c5d1de', boxWidth: 12 } },
+          legend: { position: 'bottom', labels: { color: '#ffffff', boxWidth: 12 } },
           tooltip: {
             callbacks: {
               label(ctx) {
@@ -401,8 +401,8 @@
         scales: {
           x: {
             stacked: false,
-            ticks: { color: '#8b9cb3', maxRotation: 45 },
-            title: { display: true, text: 'Dataset', color: '#8b9cb3' }
+            ticks: { color: '#ffffff', maxRotation: 45 },
+            title: { display: true, text: 'Dataset', color: '#ffffff' }
           },
           y: Object.assign(
             { min: mode === 'pr' ? 1e-6 : 0.5 },
@@ -480,7 +480,7 @@
             }
           },
           scales: {
-            x: { ticks: { color: '#8b9cb3', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
+            x: { ticks: { color: '#ffffff', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#ffffff' } },
             y: Object.assign({ min: 0.5 }, yAxisLog(mode === 'total' ? 'Count' : 'Size'))
           }
         }
@@ -511,7 +511,7 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { labels: { color: '#c5d1de' } },
+            legend: { labels: { color: '#ffffff' } },
             tooltip: {
               callbacks: {
                 label(ctx) {
@@ -522,7 +522,7 @@
             }
           },
           scales: {
-            x: { ticks: { color: '#8b9cb3', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#8b9cb3' } },
+            x: { ticks: { color: '#ffffff', maxRotation: 45 }, title: { display: true, text: 'Dataset', color: '#ffffff' } },
             y: Object.assign({ min: 0.5 }, yAxisLog('Count'))
           }
         }
@@ -572,8 +572,8 @@
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#c5d1de', boxWidth: 12 } },
-          title: { display: true, text: 'SCCs per component size (segmented)', color: '#c5d1de', font: { size: 14 } },
+          legend: { position: 'bottom', labels: { color: '#ffffff', boxWidth: 12 } },
+          title: { display: true, text: 'SCCs per component size (segmented)', color: '#ffffff', font: { size: 14 } },
           tooltip: {
             callbacks: {
               label(ctx) {
@@ -593,8 +593,8 @@
         scales: {
           x: {
             stacked: false,
-            ticks: { color: '#8b9cb3', maxRotation: 60, autoSkip: true, maxTicksLimit: 40 },
-            title: { display: true, text: 'SCC size', color: '#8b9cb3' }
+            ticks: { color: '#ffffff', maxRotation: 60, autoSkip: true, maxTicksLimit: 40 },
+            title: { display: true, text: 'SCC size', color: '#ffffff' }
           },
           y: Object.assign({ min: 0.5 }, yAxisLog('Number of SCCs'))
         }
