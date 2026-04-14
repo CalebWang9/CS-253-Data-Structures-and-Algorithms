@@ -3,7 +3,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.Stack;
 
 public class floydWarshall {
     double[][] dist;
@@ -100,13 +99,12 @@ public class floydWarshall {
 
 
 
-        // NEW: User input for k
 
         long startTime = System.nanoTime();
         scan.close(); // Close scanner after all inputs are collected
 
         floydWarshall Test1 = new floydWarshall(1);
-        try (BufferedReader reader = new BufferedReader(new FileReader("Project2/dataset/dataset/"+ sizeChoice + ".txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("Project3/dataset/"+ sizeChoice + ".txt"))) {
             String line = reader.readLine();
             if (line == null) return;
             
