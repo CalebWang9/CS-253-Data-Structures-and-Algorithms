@@ -106,7 +106,7 @@ public class floydWarshall {
         scan.close(); // Close scanner after all inputs are collected
 
         floydWarshall Test1 = new floydWarshall(1);
-        try (BufferedReader reader = new BufferedReader(new FileReader("dataset-2/"+ sizeChoice + ".txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("Project2/dataset/dataset/"+ sizeChoice + ".txt"))) {
             String line = reader.readLine();
             if (line == null) return;
             
