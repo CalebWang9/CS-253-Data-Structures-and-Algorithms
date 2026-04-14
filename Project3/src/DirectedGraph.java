@@ -81,26 +81,26 @@ public class DirectedGraph {
 		// return the distances in format "1 to 2 (1.65) 1 -> 3 -> 6 -> 0 -> 2"
 		// If a travel path has more than 10 vertices, display only the first 5 and the last 5. For example:
 		// 0 to 1 (0.71) 0 -> 44 -> 50 -> 20 -> 3 -> ... 10 -> 148 -> 120 -> 7 -> 1
-		for (int i = 0; i < adj.size(); i++) {
-			System.out.print("\n" + s + " to " + i + " (" + distances[i] + ") ");
-			if (i == s) {
-				System.out.print(s);
-				continue;
-			}
-			if (distances[i] == Double.MAX_VALUE || previous[i] == -1) {
-				System.out.print("unreachable");
-				continue;
-			}
+		// for (int i = 0; i < adj.size(); i++) {
+		// 	System.out.print("\n" + s + " to " + i + " (" + distances[i] + ") ");
+		// 	if (i == s) {
+		// 		System.out.print(s);
+		// 		continue;
+		// 	}
+		// 	if (distances[i] == Double.MAX_VALUE || previous[i] == -1) {
+		// 		System.out.print("unreachable");
+		// 		continue;
+		// 	}
 
-			StringBuilder stringBuilder = new StringBuilder();
-			int currentNum = i;
-			stringBuilder.insert(0, currentNum);
-			while (currentNum != s && previous[currentNum] != -1) {
-				currentNum = previous[currentNum];
-				stringBuilder.insert(0, currentNum + " -> ");
-			}
-			System.out.print(stringBuilder.toString());
-		}
+		// 	StringBuilder stringBuilder = new StringBuilder();
+		// 	int currentNum = i;
+		// 	stringBuilder.insert(0, currentNum);
+		// 	while (currentNum != s && previous[currentNum] != -1) {
+		// 		currentNum = previous[currentNum];
+		// 		stringBuilder.insert(0, currentNum + " -> ");
+		// 	}
+		// 	System.out.print(stringBuilder.toString());
+		// }
 	}
 
 	public static void main(String[] args) {
@@ -119,12 +119,13 @@ public class DirectedGraph {
 			}
 		} while (invalid2);
 
-		long startTime = System.nanoTime();
 		scan.close(); // Close scanner after all inputs are collectedtiny
-
+		long startTimeCon = System.nanoTime();
 		DirectedGraph Test1 = new DirectedGraph(1);
 
-		try (BufferedReader reader = new BufferedReader(new FileReader("Project3/dataset/" + fileChoice + ".txt"))) {
+		// try (BufferedReader reader = new BufferedReader(new FileReader("Project3/dataset/" + fileChoice + ".txt"))) {
+			try (BufferedReader reader = new BufferedReader(new FileReader("user/desktop/largeEWD.txt"))) {
+
 			String line = reader.readLine();
 			if (line == null)
 				return;
@@ -144,18 +145,28 @@ public class DirectedGraph {
 		} catch (IOException e) {
 			System.out.println("Error reading file: " + e.getMessage());
 		}
+		long endTimeCon = System.nanoTime();
+		double deltaCon = (endTimeCon - startTimeCon) / 1e6;
+		System.out.println("\n " + deltaCon);
 				
 		// Run the algorithm
 		System.out.println("Single source from vertex 0");
+		long startTime = System.nanoTime();
 		Test1.BellmanFord(0);
+		long endTime = System.nanoTime();
+		double delta = (endTime - startTime) / 1e6;
+		System.out.println("\n" + delta );
+		
 		System.out.println("\nAll pairs");
+		long startTimeAll = System.nanoTime();
+
 		for (int i = 0; i < Test1.adj.size(); i++) {
 			Test1.BellmanFord(i);
 		}
-
-		long endTime = System.nanoTime();
-		double delta = (endTime - startTime) / 1e6;
-		System.out.println("\nRuntime: " + delta + " ms");
+		long endTimeAll = System.nanoTime();
+		double deltaAll = (endTimeAll - startTimeAll) / 1e6;
+		System.out.println("\n"+ deltaAll);
+		
 
 	}
 

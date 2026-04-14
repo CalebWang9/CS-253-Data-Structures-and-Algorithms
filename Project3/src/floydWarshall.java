@@ -125,6 +125,7 @@ public class floydWarshall {
             System.out.println("Error reading file: " + e.getMessage());
         }
         
+
         for (int i = 0; i < Test1.dist.length; i++) {
         	for (int j = 0; j < Test1.dist.length; j++) {
         		if (i != j && (Math.abs(Test1.dist[i][j] - 0) < 0.00001)) {
@@ -136,25 +137,25 @@ public class floydWarshall {
         floydWarshall(Test1.dist, Test1.next);
         
         
-        System.out.println();
+        // System.out.println();
         
-        System.out.println("Single source from vertex 0");
+        // System.out.println("Single source from vertex 0");
         
        
-        	for (int j = 0; j < Test1.dist.length; j++) {
-        		System.out.println(0 + " to " + j + " (" + Test1.dist[0][j] + ") " +  Test1.getPath(0, j));
-        	}
+        // 	for (int j = 0; j < Test1.dist.length; j++) {
+        // 		System.out.println(0 + " to " + j + " (" + Test1.dist[0][j] + ") " +  Test1.getPath(0, j));
+        // 	}
         
-        System.out.println();
+        // System.out.println();
         	
         	
-        System.out.println("All pairs (truncated path if > 10 nodes):");	
-        for (int i = 0; i < Test1.dist.length; i++) {
-            for (int j = 0; j < Test1.dist.length; j++) {
-                    System.out.println(i + " to " + j + " (" + Test1.dist[i][j] + ") " + Test1.getPath(i, j));
+        // System.out.println("All pairs (truncated path if > 10 nodes):");	
+        // for (int i = 0; i < Test1.dist.length; i++) {
+        //     for (int j = 0; j < Test1.dist.length; j++) {
+        //             System.out.println(i + " to " + j + " (" + Test1.dist[i][j] + ") " + Test1.getPath(i, j));
                 
-            }
-        }
+        //     }
+        // }
 
 
        
