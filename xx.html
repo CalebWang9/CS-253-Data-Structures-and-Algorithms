@@ -1,161 +1,3 @@
-<!-- <!DOCTYPE html>
-<html>
-<head>
-<h2 class="sr-only">Runtime benchmark for tinyEWD, Rome, and 10000EWD</h2>
-<style>
-  /* Global Black Text Enforcement */
-  body { background: #fff; color: #000; font-family: system-ui, sans-serif; margin: 20px; }
-  * { color: #000 !important; } 
-
-  .wrap { display: grid; grid-template-columns: 1fr 240px; gap: 28px; max-width: 1200px; margin: 0 auto; }
-  
-  /* Filter UI */
-  .controls { margin-bottom: 20px; display: flex; gap: 10px; }
-  .btn-toggle { 
-    padding: 8px 16px; border-radius: 20px; border: 1px solid #ccc; 
-    background: #fff; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s;
-  }
-  .btn-toggle.active { background: #000; color: #fff !important; border-color: #000; }
-  
-  .leg { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 16px; align-items: center; }
-  .leg-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
-  .leg-sq { width: 14px; height: 14px; border-radius: 3px; }
-  
-  .chart-container { position: relative; width: 100%; height: 450px; }
-  
-  .sec-label { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin: 0 0 10px; }
-  .pcard { background: #f4f4f4; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ccc; }
-  .pcard-algo { font-size: 11px; font-weight: 600; margin: 0; }
-  .pcard-val { font-size: 18px; font-weight: 600; margin: 2px 0; }
-  .pcard-sub { font-size: 11px; margin: 0; opacity: 0.9; }
-  
-  .note-box { border-radius: 8px; padding: 12px; background: #f0f0f0; margin-top: 10px; }
-  
-  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
-</style>
-</head>
-<body>
-
-<div class="controls">
-  <button id="btn-all" class="btn-toggle active" onclick="updateChart('all')">All Data</button>
-  <button id="btn-0" class="btn-toggle" onclick="updateChart(0)">tinyEWD</button>
-  <button id="btn-1" class="btn-toggle" onclick="updateChart(1)">Rome</button>
-  <button id="btn-2" class="btn-toggle" onclick="updateChart(2)">10000EWD</button>
-</div>
-
-<div class="wrap">
-  <div>
-    <div class="leg">
-      <span class="leg-item"><span class="leg-sq" style="background:#1a5ea8"></span>Bell source</span>
-      <span class="leg-item"><span class="leg-sq" style="background:#b83822"></span>Bell all pairs</span>
-      <span class="leg-item"><span class="leg-sq" style="background:#0f7a54"></span>Floyd all pairs</span>
-      <span style="font-size:12px;">· log scale (ms)</span>
-    </div>
-    <div class="chart-container">
-      <canvas id="bc"></canvas>
-    </div>
-  </div>
-
-  <div class="sidebar">
-    <p class="sec-label">largeEWD projections</p>
-    <div class="pcard" style="border-left-color:#1a5ea8">
-      <p class="pcard-algo">Bell source — measured</p>
-      <p class="pcard-val">5,711 ms</p>
-      <p class="pcard-sub">~5.7 seconds</p>
-    </div>
-    <div class="pcard" style="border-left-color:#b83822">
-      <p class="pcard-algo">Bell all pairs — projected</p>
-      <p class="pcard-val">~65 days</p>
-      <p class="pcard-sub">O(V · E) per source</p>
-    </div>
-    <div class="pcard" style="border-left-color:#0f7a54">
-      <p class="pcard-algo">Floyd all pairs — projected</p>
-      <p class="pcard-val">~31 years</p>
-      <p class="pcard-sub">O(V³) scaling</p>
-    </div>
-    <div class="note-box">
-      <p style="font-size:12px; font-weight:600; margin:0">Bell vs Floyd Improvement</p>
-      <p style="font-size:20px; font-weight:700; margin:2px 0">174× faster</p>
-      <p style="font-size:11px; margin:0">65 days vs 31 years</p>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script>
-const RAW_LABELS = ['tinyEWD', 'Rome', '10000EWD'];
-const DATA_BELL_S = [7.381275, 67.9527748, 163.9426748];
-const DATA_BELL_A = [7.4237498, 3597.746166, 10252.13338];
-const DATA_FLOYD  = [14.6090416, 28673.36272, 1007945.193];
-
-const ctx = document.getElementById('bc').getContext('2d');
-
-// Configure global Chart.js defaults for black text
-Chart.defaults.color = '#000';
-Chart.defaults.font.family = 'system-ui, sans-serif';
-
-let myChart = new Chart(ctx, {
-  type: 'bar',
-  data: {
-    labels: RAW_LABELS,
-    datasets: [
-      { label: 'Bell source', data: [...DATA_BELL_S], backgroundColor: '#1a5ea8', borderRadius: 4 },
-      { label: 'Bell all pairs', data: [...DATA_BELL_A], backgroundColor: '#b83822', borderRadius: 4 },
-      { label: 'Floyd all pairs', data: [...DATA_FLOYD], backgroundColor: '#0f7a54', borderRadius: 4 }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: {
-        type: 'logarithmic',
-        grid: { color: 'rgba(0,0,0,0.1)' },
-        ticks: {
-          color: '#000',
-          font: { weight: '500' },
-          callback: (v) => v >= 1000000 ? (v/1000000)+'M' : (v >= 1000 ? (v/1000)+'k' : v)
-        }
-      },
-      x: {
-        grid: { display: false },
-        ticks: { color: '#000', font: { weight: '500' } }
-      }
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        titleColor: '#000',
-        bodyColor: '#000',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderColor: '#ccc',
-        borderWidth: 1
-      }
-    }
-  }
-});
-
-function updateChart(index) {
-  // Toggle button active states
-  document.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('active'));
-  if (index === 'all') {
-    document.getElementById('btn-all').classList.add('active');
-    myChart.data.labels = RAW_LABELS;
-    myChart.data.datasets[0].data = DATA_BELL_S;
-    myChart.data.datasets[1].data = DATA_BELL_A;
-    myChart.data.datasets[2].data = DATA_FLOYD;
-  } else {
-    document.getElementById('btn-' + index).classList.add('active');
-    myChart.data.labels = [RAW_LABELS[index]];
-    myChart.data.datasets[0].data = [DATA_BELL_S[index]];
-    myChart.data.datasets[1].data = [DATA_BELL_A[index]];
-    myChart.data.datasets[2].data = [DATA_FLOYD[index]];
-  }
-  myChart.update();
-}
-</script>
-</body>
-</html> -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -205,6 +47,7 @@ function updateChart(index) {
     <div class="leg">
       <span class="leg-item"><span class="leg-sq" style="background:#1a5ea8"></span>Bell source</span>
       <span class="leg-item"><span class="leg-sq" style="background:#b83822"></span>Bell all pairs</span>
+      <span class="leg-item"><span class="leg-sq" style="background:rgba(0,0,0,0.18); border:1px solid rgba(0,0,0,0.35)"></span>Construction (shaded base in Bell bars)</span>
       <span class="leg-item"><span class="leg-sq" style="background:#0f7a54"></span>Floyd all pairs</span>
       <span style="font-size:12px;">· log scale (ms)</span>
     </div>
@@ -217,12 +60,12 @@ function updateChart(index) {
     <p class="sec-label">largeEWD projections</p>
     <div class="pcard" style="border-left-color:#1a5ea8">
       <p class="pcard-algo">Bell source — measured</p>
-      <p class="pcard-val">5,711 ms</p>
-      <p class="pcard-sub">~5.7 seconds</p>
+      <p class="pcard-val">2449.38 ms</p>
+      <p class="pcard-sub">~2.4 seconds</p>
     </div>
     <div class="pcard" style="border-left-color:#b83822">
       <p class="pcard-algo">Bell all pairs — projected</p>
-      <p class="pcard-val">~65 days</p>
+      <p class="pcard-val">~28 days</p>
       <p class="pcard-sub">O(V · E) per source</p>
     </div>
     <div class="pcard" style="border-left-color:#0f7a54">
@@ -241,9 +84,15 @@ function updateChart(index) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const RAW_LABELS = ['tinyEWD', 'Rome', '10000EWD'];
-const DATA_BELL_S = [7.381275, 67.9527748, 163.9426748];
-const DATA_BELL_A = [7.4237498, 3597.746166, 10252.13338];
+const DATA_BELL_CON = [7.3200416, 57.96705, 147.9632748];
+const DATA_BELL_S = [7.381275, 67.9527748, 163.9426748];      // total runtime (construction + algorithm)
+const DATA_BELL_A = [7.4237498, 3597.746166, 10252.13338];    // total runtime (construction + algorithm)
 const DATA_FLOYD  = [14.6090416, 28673.36272, 1007945.193];
+
+const TOTAL_BELL_S = [...DATA_BELL_S];
+const TOTAL_BELL_A = [...DATA_BELL_A];
+const DATA_BELL_S_REMAINDER = DATA_BELL_S.map((v, i) => Math.max(v - DATA_BELL_CON[i], 0));
+const DATA_BELL_A_REMAINDER = DATA_BELL_A.map((v, i) => Math.max(v - DATA_BELL_CON[i], 0));
 
 // Plugin to draw labels above bars with collision avoidance
 const topLabelsPlugin = {
@@ -251,9 +100,10 @@ const topLabelsPlugin = {
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
     chart.data.datasets.forEach((dataset, i) => {
+      if (!dataset.isTopLabel) return;
       const meta = chart.getDatasetMeta(i);
       meta.data.forEach((bar, index) => {
-        const value = dataset.data[index];
+        const value = (dataset.totalData ? dataset.totalData[index] : dataset.data[index]);
         if (value === null || value === undefined) return;
 
         let label;
@@ -287,9 +137,14 @@ let myChart = new Chart(ctx, {
   data: {
     labels: RAW_LABELS,
     datasets: [
-      { label: 'Bell source', data: [...DATA_BELL_S], backgroundColor: '#1a5ea8', borderRadius: 4 },
-      { label: 'Bell all pairs', data: [...DATA_BELL_A], backgroundColor: '#b83822', borderRadius: 4 },
-      { label: 'Floyd all pairs', data: [...DATA_FLOYD], backgroundColor: '#0f7a54', borderRadius: 4 }
+      // Bellman–Ford (queue-based): show construction as a shaded base segment
+      { label: 'Bell source (construction)', data: [...DATA_BELL_CON], backgroundColor: 'rgba(26,94,168,0.22)', borderRadius: 4, stack: 'bell_source' },
+      { label: 'Bell source', data: [...DATA_BELL_S_REMAINDER], backgroundColor: '#1a5ea8', borderRadius: 4, stack: 'bell_source', isTopLabel: true, totalData: [...TOTAL_BELL_S] },
+
+      { label: 'Bell all pairs (construction)', data: [...DATA_BELL_CON], backgroundColor: 'rgba(184,56,34,0.22)', borderRadius: 4, stack: 'bell_all' },
+      { label: 'Bell all pairs', data: [...DATA_BELL_A_REMAINDER], backgroundColor: '#b83822', borderRadius: 4, stack: 'bell_all', isTopLabel: true, totalData: [...TOTAL_BELL_A] },
+
+      { label: 'Floyd all pairs', data: [...DATA_FLOYD], backgroundColor: '#0f7a54', borderRadius: 4, stack: 'floyd', isTopLabel: true }
     ]
   },
   options: {
@@ -301,12 +156,13 @@ let myChart = new Chart(ctx, {
     scales: {
       y: {
         type: 'logarithmic',
+        stacked: true,
         grid: { color: 'rgba(0,0,0,0.05)' },
         ticks: {
           callback: (v) => v >= 1000000 ? (v/1000000)+'M' : (v >= 1000 ? (v/1000)+'k' : v)
         }
       },
-      x: { grid: { display: false } }
+      x: { stacked: true, grid: { display: false } }
     },
     plugins: {
       legend: { display: false },
@@ -320,15 +176,23 @@ function updateChart(index) {
   if (index === 'all') {
     document.getElementById('btn-all').classList.add('active');
     myChart.data.labels = RAW_LABELS;
-    myChart.data.datasets[0].data = DATA_BELL_S;
-    myChart.data.datasets[1].data = DATA_BELL_A;
-    myChart.data.datasets[2].data = DATA_FLOYD;
+    myChart.data.datasets[0].data = DATA_BELL_CON;
+    myChart.data.datasets[1].data = DATA_BELL_S_REMAINDER;
+    myChart.data.datasets[1].totalData = TOTAL_BELL_S;
+    myChart.data.datasets[2].data = DATA_BELL_CON;
+    myChart.data.datasets[3].data = DATA_BELL_A_REMAINDER;
+    myChart.data.datasets[3].totalData = TOTAL_BELL_A;
+    myChart.data.datasets[4].data = DATA_FLOYD;
   } else {
     document.getElementById('btn-' + index).classList.add('active');
     myChart.data.labels = [RAW_LABELS[index]];
-    myChart.data.datasets[0].data = [DATA_BELL_S[index]];
-    myChart.data.datasets[1].data = [DATA_BELL_A[index]];
-    myChart.data.datasets[2].data = [DATA_FLOYD[index]];
+    myChart.data.datasets[0].data = [DATA_BELL_CON[index]];
+    myChart.data.datasets[1].data = [DATA_BELL_S_REMAINDER[index]];
+    myChart.data.datasets[1].totalData = [TOTAL_BELL_S[index]];
+    myChart.data.datasets[2].data = [DATA_BELL_CON[index]];
+    myChart.data.datasets[3].data = [DATA_BELL_A_REMAINDER[index]];
+    myChart.data.datasets[3].totalData = [TOTAL_BELL_A[index]];
+    myChart.data.datasets[4].data = [DATA_FLOYD[index]];
   }
   myChart.update();
 }
