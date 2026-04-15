@@ -1,0 +1,337 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+<h2 class="sr-only">Runtime benchmark for tinyEWD, Rome, and 10000EWD</h2>
+<style>
+  /* Global Black Text Enforcement */
+  body { background: #fff; color: #000; font-family: system-ui, sans-serif; margin: 20px; }
+  * { color: #000 !important; } 
+
+  .wrap { display: grid; grid-template-columns: 1fr 240px; gap: 28px; max-width: 1200px; margin: 0 auto; }
+  
+  /* Filter UI */
+  .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+  .btn-toggle { 
+    padding: 8px 16px; border-radius: 20px; border: 1px solid #ccc; 
+    background: #fff; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s;
+  }
+  .btn-toggle.active { background: #000; color: #fff !important; border-color: #000; }
+  
+  .leg { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 16px; align-items: center; }
+  .leg-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+  .leg-sq { width: 14px; height: 14px; border-radius: 3px; }
+  
+  .chart-container { position: relative; width: 100%; height: 450px; }
+  
+  .sec-label { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin: 0 0 10px; }
+  .pcard { background: #f4f4f4; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ccc; }
+  .pcard-algo { font-size: 11px; font-weight: 600; margin: 0; }
+  .pcard-val { font-size: 18px; font-weight: 600; margin: 2px 0; }
+  .pcard-sub { font-size: 11px; margin: 0; opacity: 0.9; }
+  
+  .note-box { border-radius: 8px; padding: 12px; background: #f0f0f0; margin-top: 10px; }
+  
+  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button id="btn-all" class="btn-toggle active" onclick="updateChart('all')">All Data</button>
+  <button id="btn-0" class="btn-toggle" onclick="updateChart(0)">tinyEWD</button>
+  <button id="btn-1" class="btn-toggle" onclick="updateChart(1)">Rome</button>
+  <button id="btn-2" class="btn-toggle" onclick="updateChart(2)">10000EWD</button>
+</div>
+
+<div class="wrap">
+  <div>
+    <div class="leg">
+      <span class="leg-item"><span class="leg-sq" style="background:#1a5ea8"></span>Bell source</span>
+      <span class="leg-item"><span class="leg-sq" style="background:#b83822"></span>Bell all pairs</span>
+      <span class="leg-item"><span class="leg-sq" style="background:#0f7a54"></span>Floyd all pairs</span>
+      <span style="font-size:12px;">· log scale (ms)</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="bc"></canvas>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <p class="sec-label">largeEWD projections</p>
+    <div class="pcard" style="border-left-color:#1a5ea8">
+      <p class="pcard-algo">Bell source — measured</p>
+      <p class="pcard-val">5,711 ms</p>
+      <p class="pcard-sub">~5.7 seconds</p>
+    </div>
+    <div class="pcard" style="border-left-color:#b83822">
+      <p class="pcard-algo">Bell all pairs — projected</p>
+      <p class="pcard-val">~65 days</p>
+      <p class="pcard-sub">O(V · E) per source</p>
+    </div>
+    <div class="pcard" style="border-left-color:#0f7a54">
+      <p class="pcard-algo">Floyd all pairs — projected</p>
+      <p class="pcard-val">~31 years</p>
+      <p class="pcard-sub">O(V³) scaling</p>
+    </div>
+    <div class="note-box">
+      <p style="font-size:12px; font-weight:600; margin:0">Bell vs Floyd Improvement</p>
+      <p style="font-size:20px; font-weight:700; margin:2px 0">174× faster</p>
+      <p style="font-size:11px; margin:0">65 days vs 31 years</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const RAW_LABELS = ['tinyEWD', 'Rome', '10000EWD'];
+const DATA_BELL_S = [7.381275, 67.9527748, 163.9426748];
+const DATA_BELL_A = [7.4237498, 3597.746166, 10252.13338];
+const DATA_FLOYD  = [14.6090416, 28673.36272, 1007945.193];
+
+const ctx = document.getElementById('bc').getContext('2d');
+
+// Configure global Chart.js defaults for black text
+Chart.defaults.color = '#000';
+Chart.defaults.font.family = 'system-ui, sans-serif';
+
+let myChart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: RAW_LABELS,
+    datasets: [
+      { label: 'Bell source', data: [...DATA_BELL_S], backgroundColor: '#1a5ea8', borderRadius: 4 },
+      { label: 'Bell all pairs', data: [...DATA_BELL_A], backgroundColor: '#b83822', borderRadius: 4 },
+      { label: 'Floyd all pairs', data: [...DATA_FLOYD], backgroundColor: '#0f7a54', borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        type: 'logarithmic',
+        grid: { color: 'rgba(0,0,0,0.1)' },
+        ticks: {
+          color: '#000',
+          font: { weight: '500' },
+          callback: (v) => v >= 1000000 ? (v/1000000)+'M' : (v >= 1000 ? (v/1000)+'k' : v)
+        }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: '#000', font: { weight: '500' } }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        titleColor: '#000',
+        bodyColor: '#000',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderColor: '#ccc',
+        borderWidth: 1
+      }
+    }
+  }
+});
+
+function updateChart(index) {
+  // Toggle button active states
+  document.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('active'));
+  if (index === 'all') {
+    document.getElementById('btn-all').classList.add('active');
+    myChart.data.labels = RAW_LABELS;
+    myChart.data.datasets[0].data = DATA_BELL_S;
+    myChart.data.datasets[1].data = DATA_BELL_A;
+    myChart.data.datasets[2].data = DATA_FLOYD;
+  } else {
+    document.getElementById('btn-' + index).classList.add('active');
+    myChart.data.labels = [RAW_LABELS[index]];
+    myChart.data.datasets[0].data = [DATA_BELL_S[index]];
+    myChart.data.datasets[1].data = [DATA_BELL_A[index]];
+    myChart.data.datasets[2].data = [DATA_FLOYD[index]];
+  }
+  myChart.update();
+}
+</script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html>
+<head>
+<h2 class="sr-only">Runtime benchmark for tinyEWD, Rome, and 10000EWD</h2>
+<style>
+  body { background: #fff; color: #000; font-family: system-ui, sans-serif; margin: 20px; }
+  /* Universal black text enforcement */
+  * { color: #000 !important; } 
+
+  .wrap { display: grid; grid-template-columns: 1fr 240px; gap: 28px; max-width: 1200px; margin: 0 auto; }
+  
+  .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+  .btn-toggle { 
+    padding: 8px 16px; border-radius: 20px; border: 1px solid #ccc; 
+    background: #fff; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s;
+  }
+  .btn-toggle.active { background: #000; color: #fff !important; border-color: #000; }
+  
+  .leg { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 16px; align-items: center; }
+  .leg-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+  .leg-sq { width: 14px; height: 14px; border-radius: 3px; }
+  
+  .chart-container { position: relative; width: 100%; height: 450px; }
+  
+  .sec-label { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin: 0 0 10px; }
+  .pcard { background: #f4f4f4; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #ccc; }
+  .pcard-algo { font-size: 11px; font-weight: 600; margin: 0; }
+  .pcard-val { font-size: 18px; font-weight: 600; margin: 2px 0; }
+  .pcard-sub { font-size: 11px; margin: 0; }
+  
+  .note-box { border-radius: 8px; padding: 12px; background: #f0f0f0; margin-top: 10px; }
+  
+  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button id="btn-all" class="btn-toggle active" onclick="updateChart('all')">All Data</button>
+  <button id="btn-0" class="btn-toggle" onclick="updateChart(0)">tinyEWD</button>
+  <button id="btn-1" class="btn-toggle" onclick="updateChart(1)">Rome</button>
+  <button id="btn-2" class="btn-toggle" onclick="updateChart(2)">10000EWD</button>
+</div>
+
+<div class="wrap">
+  <div>
+    <div class="leg">
+      <span class="leg-item"><span class="leg-sq" style="background:#1a5ea8"></span>Bell source</span>
+      <span class="leg-item"><span class="leg-sq" style="background:#b83822"></span>Bell all pairs</span>
+      <span class="leg-item"><span class="leg-sq" style="background:#0f7a54"></span>Floyd all pairs</span>
+      <span style="font-size:12px;">· log scale (ms)</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="bc"></canvas>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <p class="sec-label">largeEWD projections</p>
+    <div class="pcard" style="border-left-color:#1a5ea8">
+      <p class="pcard-algo">Bell source — measured</p>
+      <p class="pcard-val">5,711 ms</p>
+      <p class="pcard-sub">~5.7 seconds</p>
+    </div>
+    <div class="pcard" style="border-left-color:#b83822">
+      <p class="pcard-algo">Bell all pairs — projected</p>
+      <p class="pcard-val">~65 days</p>
+      <p class="pcard-sub">O(V · E) per source</p>
+    </div>
+    <div class="pcard" style="border-left-color:#0f7a54">
+      <p class="pcard-algo">Floyd all pairs — projected</p>
+      <p class="pcard-val">~31 years</p>
+      <p class="pcard-sub">O(V³) scaling</p>
+    </div>
+    <div class="note-box">
+      <p style="font-size:12px; font-weight:600; margin:0">Bell vs Floyd Improvement</p>
+      <p style="font-size:20px; font-weight:700; margin:2px 0">174× faster</p>
+      <p style="font-size:11px; margin:0">65 days vs 31 years</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const RAW_LABELS = ['tinyEWD', 'Rome', '10000EWD'];
+const DATA_BELL_S = [7.381275, 67.9527748, 163.9426748];
+const DATA_BELL_A = [7.4237498, 3597.746166, 10252.13338];
+const DATA_FLOYD  = [14.6090416, 28673.36272, 1007945.193];
+
+// Plugin to draw labels above bars with collision avoidance
+const topLabelsPlugin = {
+  id: 'topLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      meta.data.forEach((bar, index) => {
+        const value = dataset.data[index];
+        if (value === null || value === undefined) return;
+
+        let label;
+        if (value >= 1000000) label = (value / 1000000).toFixed(1) + 'M';
+        else if (value >= 1000) label = (value / 1000).toFixed(1) + 'k';
+        else label = value.toFixed(1);
+        
+        ctx.save();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        // Ensure labels don't clip at the very top of the canvas
+        const padding = 5;
+        const yPos = Math.max(bar.y - padding, 15); 
+        
+        ctx.fillText(label + ' ms', bar.x, yPos);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+const ctx = document.getElementById('bc').getContext('2d');
+Chart.defaults.color = '#000';
+
+let myChart = new Chart(ctx, {
+  type: 'bar',
+  plugins: [topLabelsPlugin],
+  data: {
+    labels: RAW_LABELS,
+    datasets: [
+      { label: 'Bell source', data: [...DATA_BELL_S], backgroundColor: '#1a5ea8', borderRadius: 4 },
+      { label: 'Bell all pairs', data: [...DATA_BELL_A], backgroundColor: '#b83822', borderRadius: 4 },
+      { label: 'Floyd all pairs', data: [...DATA_FLOYD], backgroundColor: '#0f7a54', borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: {
+      padding: { top: 25 } // Extra space at top to prevent label collision with edge
+    },
+    scales: {
+      y: {
+        type: 'logarithmic',
+        grid: { color: 'rgba(0,0,0,0.05)' },
+        ticks: {
+          callback: (v) => v >= 1000000 ? (v/1000000)+'M' : (v >= 1000 ? (v/1000)+'k' : v)
+        }
+      },
+      x: { grid: { display: false } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: true }
+    }
+  }
+});
+
+function updateChart(index) {
+  document.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('active'));
+  if (index === 'all') {
+    document.getElementById('btn-all').classList.add('active');
+    myChart.data.labels = RAW_LABELS;
+    myChart.data.datasets[0].data = DATA_BELL_S;
+    myChart.data.datasets[1].data = DATA_BELL_A;
+    myChart.data.datasets[2].data = DATA_FLOYD;
+  } else {
+    document.getElementById('btn-' + index).classList.add('active');
+    myChart.data.labels = [RAW_LABELS[index]];
+    myChart.data.datasets[0].data = [DATA_BELL_S[index]];
+    myChart.data.datasets[1].data = [DATA_BELL_A[index]];
+    myChart.data.datasets[2].data = [DATA_FLOYD[index]];
+  }
+  myChart.update();
+}
+</script>
+</body>
+</html>
